@@ -11,10 +11,12 @@ let map = null;
 let marker = null;
 
 // ── Cache key ──────────────────────────────────────────────────────────────
-// Fingerprint the route so each GPX file gets its own landmark cache entry.
+// Bump this when the landmark schema changes to auto-bust stale caches.
+const CACHE_VERSION = "v2";
+
 function routeCacheKey(r) {
   const a = r[0], b = r[Math.floor(r.length / 2)], c = r[r.length - 1];
-  return `otg_lm_${a.lat.toFixed(4)}_${a.lon.toFixed(4)}_${b.lat.toFixed(4)}_${c.lat.toFixed(4)}_${r.length}`;
+  return `otg_lm_${CACHE_VERSION}_${a.lat.toFixed(4)}_${a.lon.toFixed(4)}_${b.lat.toFixed(4)}_${c.lat.toFixed(4)}_${r.length}`;
 }
 
 // ── Landmark sources ───────────────────────────────────────────────────────
@@ -260,34 +262,58 @@ function buildLegend(lms) {
 // ── Did You Know ───────────────────────────────────────────────────────────
 const dykCache = new Map();
 
+async function fetchWikipediaExtract(title) {
+  const url = `https://en.wikipedia.org/w/api.php?` + new URLSearchParams({
+    action: "query", prop: "extracts|info",
+    exintro: true, exchars: 600,
+    titles: title, inprop: "url",
+    format: "json", origin: "*",
+  });
+  const resp = await fetch(url);
+  const data = await resp.json();
+  const page = Object.values(data.query.pages)[0];
+  if (!page || page.missing !== undefined) return null;
+  const text = (page.extract || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  return { text, link: page.fullurl || `https://en.wikipedia.org/wiki/${encodeURIComponent(title)}` };
+}
+
+async function searchWikipedia(query) {
+  const url = `https://en.wikipedia.org/w/api.php?` + new URLSearchParams({
+    action: "query", list: "search",
+    srsearch: query, srlimit: 1,
+    format: "json", origin: "*",
+  });
+  const resp = await fetch(url);
+  const data = await resp.json();
+  const hit = data.query?.search?.[0];
+  return hit ? hit.title : null;
+}
+
 async function fetchLandmarkInfo(lm) {
   if (dykCache.has(lm.name)) return dykCache.get(lm.name);
 
-  if (lm.source === "wikipedia" && lm.pageid) {
-    const url = `https://en.wikipedia.org/w/api.php?` + new URLSearchParams({
-      action: "query", prop: "extracts",
-      exintro: true, exchars: 600, pageids: lm.pageid,
-      format: "json", origin: "*",
-    });
-    try {
-      const resp = await fetch(url);
-      const data = await resp.json();
-      const page = Object.values(data.query.pages)[0];
-      // Strip HTML tags from extract
-      const text = (page.extract || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
-      const result = { text: text || "No description available.", link: lm.url };
-      dykCache.set(lm.name, result);
-      return result;
-    } catch {
-      const result = { text: "Could not load description.", link: lm.url };
-      dykCache.set(lm.name, result);
-      return result;
+  let result = null;
+
+  try {
+    // Try the landmark name directly first (works for Wikipedia-sourced and
+    // many OSM landmarks whose names match a Wikipedia article exactly)
+    result = await fetchWikipediaExtract(lm.name);
+
+    // If no direct hit, search Wikipedia for the name
+    if (!result) {
+      const found = await searchWikipedia(lm.name);
+      if (found) result = await fetchWikipediaExtract(found);
     }
+  } catch (e) {
+    console.warn("Wikipedia fetch failed:", e.message);
   }
 
-  // OSM fallback
-  const type = (lm.osmType || "place").replace(/_/g, " ");
-  const result = { text: `A ${type} along the route.`, link: null };
+  if (!result) {
+    const type = (lm.osmType || "point of interest").replace(/_/g, " ");
+    result = { text: `No Wikipedia article found for this ${type}.`, link: null };
+  }
+
   dykCache.set(lm.name, result);
   return result;
 }
