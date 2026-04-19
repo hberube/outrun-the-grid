@@ -1,89 +1,109 @@
 # Architecture
 
-Outrun the Grid has two completely separate layers that never talk to each other at runtime. The build layer runs once on your machine; the runtime layer runs in any browser with no server.
+Outrun the Grid has two separate layers. The build layer runs once locally; the runtime layer runs in any browser with no server.
 
 ---
 
-## Build Layer (local Python)
+## Build Layer (local Python) — current
 
-```
+```text
 your_run.gpx
      │
      ▼
 scripts/build.py
      │
-     ├─▶ data/route_data.json   [{t, lat, lon, pace, ele}, ...]
-     └─▶ data/landmarks.json    [{t, name, lat, lon}, ...]
+     └─▶ data/route_data.json   [{t, lat, lon, pace, ele}, ...]
 ```
 
-**`scripts/build.py`** does two things:
+**`scripts/build.py`** does one thing: parse the GPX.
 
 1. **GPX parsing** — uses `gpxpy` to walk every track point and compute:
    - `t`: seconds elapsed since the first point
-   - `lat`, `lon`: coordinates
-   - `pace`: min/km, derived from time delta / haversine distance
+   - `lat`, `lon`: coordinates (with Insta360 sign-fix applied if needed)
+   - `pace`: min/km, derived from time delta ÷ haversine distance
    - `ele`: elevation in meters
 
-2. **Landmark fetching** — queries the [Overpass API](https://overpass-api.de) for named `amenity`, `tourism`, `historic`, and `leisure` nodes within the route's bounding box. Each result is matched to the nearest route point within 50 meters and stamped with that point's `t` value.
+**Known quirk:** Insta360 Studio's GPX exporter drops the negative sign on longitudes in the western hemisphere. The script compares the `<bounds>` metadata sign to the first track point and negates all longitudes if they disagree.
 
-**Known quirk:** Insta360 Studio's GPX exporter drops the negative sign on longitudes in the western hemisphere (the `<bounds>` metadata is correct but `<trkpt>` elements are wrong). The script auto-detects this by comparing the metadata max longitude sign to the first track point and negates all longitudes if they disagree.
-
-**Output files are gitignored.** They contain your personal GPS data and are regenerated per run.
+**Output files are gitignored.** They contain personal GPS data and are regenerated per run.
 
 ---
 
-## Runtime Layer (static browser)
+## Runtime Layer (static browser) — current
 
-```
+```text
 Browser
   │
-  ├── fetch config.json          ← videoId, landmarkWindowSeconds
+  ├── fetch config.json            ← videoId, landmarkWindow, landmarkSources
   ├── fetch data/route_data.json
-  ├── fetch data/landmarks.json
   │
-  ├── Leaflet.js (OpenStreetMap) ← draws route polyline + neon marker
-  └── YouTube IFrame API         ← video player
+  ├── Leaflet.js (OpenStreetMap)   ← route polyline + neon marker
+  └── YouTube IFrame API           ← video player
             │
-            └── timeupdate (250ms) ─▶ binary search route_data
+            └── setInterval 250ms ─▶ binary search route_data
                                       move marker
-                                      update HUD
-                                      check landmarks
+                                      update HUD (pace, ele, time)
+                                      check & fire landmark cards
+
+  Landmark fetch (non-blocking, after map init):
+  ├── localStorage hit?  ──yes──▶ use cache
+  └── no ─▶ fetch Overpass API + Wikipedia Geosearch in parallel
+            │
+            └──▶ deduplicate → cache in localStorage (keyed to route fingerprint)
+                               plot pins on map
 ```
 
 ### Boot sequence
 
-Both the YouTube IFrame API and the data fetch happen in parallel on page load. A `tryInitPlayer()` gate ensures the YouTube player is only created after **both** the API script is ready (`onYouTubeIframeAPIReady`) and `config.json` has been fetched (so `VIDEO_ID` is available). Whichever finishes last triggers player creation.
+`config.json` and `route_data.json` are fetched in parallel on load. The YouTube player is created only after both the IFrame API script fires `onYouTubeIframeAPIReady` **and** the config fetch resolves (so `VIDEO_ID` is available). Whichever completes last triggers `tryInitPlayer()`.
+
+Landmark fetching is non-blocking — the map and player initialize immediately; landmarks load and appear on the map in the background.
 
 ### Sync loop
 
-When the YouTube player state changes to `PLAYING`, a `setInterval` fires every 250ms. Each tick:
-1. Reads `ytPlayer.getCurrentTime()` (seconds)
-2. Binary-searches `route_data` on `t` to find the closest point — O(log n)
-3. Moves the Leaflet marker to that point's coordinates
-4. Updates the HUD (pace, elevation, elapsed time)
-5. Checks whether any landmark's `t` falls within ±`landmarkWindowSeconds` of the current time and hasn't been shown yet → shows the overlay card for 3 seconds
+Every 250ms while playing:
+1. Read `ytPlayer.getCurrentTime()`
+2. Binary-search `route_data` on `t` — O(log n)
+3. Move the Leaflet marker
+4. Update HUD (pace, elevation, elapsed time)
+5. Check landmarks: if any `lm.t` is within ±`landmarkWindowSeconds` and hasn't fired yet → show overlay card for 3.5s
 
-A separate 500ms poll detects seeks (time jumps > 3s) and clears the shown-landmarks set so cards re-trigger after scrubbing.
+A 500ms poll detects seeks (Δt > 3s) and clears shown-landmark state so cards re-trigger correctly after scrubbing.
 
-### Key dependencies
+### Landmark cache
 
-| Dependency | How loaded | Why |
-|---|---|---|
-| [Leaflet.js 1.9](https://leafletjs.com) | CDN | Interactive map, no API key |
-| [OpenStreetMap](https://www.openstreetmap.org) | Tile CDN | Map tiles, no API key |
-| [YouTube IFrame API](https://developers.google.com/youtube/iframe_api_reference) | Script tag | Video playback with time access |
+Cache key: `otg_lm_{lat0}_{lon0}_{latMid}_{latEnd}_{pointCount}` stored in `localStorage`. To force a re-fetch, run `localStorage.clear()` in the browser console.
 
 ---
 
-## Deployment
+## Planned Build Layer Additions
 
-The entire site is static. Push to any static host (GitHub Pages, Netlify, S3).
+Future phases will expand `build.py` output:
 
+```text
+your_run.gpx
+(optional) ghost_run.gpx
+     │
+     ▼
+scripts/build.py
+     │
+     ├─▶ data/route_data.json   [{t, lat, lon, pace, ele, gradient}, ...]   ← add gradient
+     ├─▶ data/ghost_data.json   [{t, lat, lon, pace}, ...]                  ← Phase 4
+     └─▶ data/narrative.json    [{t, title, text}, ...]                     ← Phase 3 (AI)
 ```
-GitHub Pages
-  └── serves index.html, css/, js/, config.json
-         data/ ── generated locally, NOT committed
-         video ── hosted on YouTube (unlisted or public)
-```
 
-To update for a new run: regenerate `data/`, update `config.json`, push. No build pipeline, no CI required.
+- **`gradient`** — percent grade per point, computed from elevation delta ÷ distance. Used to identify Boss Zones (steep climbs) in the browser.
+- **`ghost_data.json`** — second runner's GPX parsed into the same format, enabling co-op overlay.
+- **`narrative.json`** — chapter titles and commentary generated by Claude at build time from pace/elevation segments, timestamped to the route.
+
+---
+
+## Key dependencies
+
+| Dependency | How loaded | Purpose |
+|---|---|---|
+| [Leaflet.js 1.9](https://leafletjs.com) | CDN | Map, no API key needed |
+| [OpenStreetMap](https://www.openstreetmap.org) | Tile CDN | Map tiles |
+| [YouTube IFrame API](https://developers.google.com/youtube/iframe_api_reference) | Script tag | Video + time access |
+| [Overpass API](https://overpass-api.de) | `fetch()` in browser | OSM POI landmarks |
+| [Wikipedia Geosearch](https://www.mediawiki.org/wiki/API:Geosearch) | `fetch()` in browser | Wikipedia article landmarks |
