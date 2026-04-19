@@ -37,6 +37,17 @@ def parse_gpx(gpx_path):
     if not points:
         sys.exit("No track points found in GPX file.")
 
+    # Insta360 Studio bug: trkpt longitudes are written as positive even when
+    # the bounds metadata correctly shows negative values (e.g. western hemisphere).
+    # Detect by comparing metadata bounds sign vs actual point sign.
+    fix_lon_sign = False
+    if gpx.bounds and gpx.bounds.max_longitude is not None:
+        meta_lon = gpx.bounds.max_longitude
+        point_lon = points[0].longitude
+        if meta_lon < 0 < point_lon:
+            fix_lon_sign = True
+            print("Note: Fixing Insta360 longitude sign bug (negating all longitudes).")
+
     t0 = points[0].time
     route = []
     prev_pt = None
@@ -50,14 +61,16 @@ def parse_gpx(gpx_path):
         pace = None
         if prev_pt is not None and prev_t is not None:
             dt = (pt.time - prev_t).total_seconds()
-            dist = haversine(prev_pt.latitude, prev_pt.longitude, pt.latitude, pt.longitude)
+            prev_lon = -prev_pt.longitude if fix_lon_sign else prev_pt.longitude
+            dist = haversine(prev_pt.latitude, prev_lon, pt.latitude, lon)
             if dist > 0 and dt > 0:
                 pace = round((dt / 60) / (dist / 1000), 2)  # min/km
 
+        lon = -pt.longitude if fix_lon_sign else pt.longitude
         route.append({
             "t": round(rel_t, 1),
             "lat": pt.latitude,
-            "lon": pt.longitude,
+            "lon": lon,
             "pace": pace,
             "ele": round(pt.elevation, 1) if pt.elevation is not None else None,
         })
@@ -74,17 +87,24 @@ def fetch_landmarks(route):
     min_lon, max_lon = min(lons) - 0.001, max(lons) + 0.001
 
     overpass_url = "https://overpass-api.de/api/interpreter"
+    bbox = f"{min_lat},{min_lon},{max_lat},{max_lon}"
     query = f"""
-[out:json][timeout:30];
+[out:json][timeout:25];
 (
-  node["name"][~"amenity|shop|tourism|historic|leisure"~"."]
-    ({min_lat},{min_lon},{max_lat},{max_lon});
+  node["name"]["amenity"]({bbox});
+  node["name"]["tourism"]({bbox});
+  node["name"]["historic"]({bbox});
+  node["name"]["leisure"]({bbox});
 );
 out body;
 """
     print("Querying Overpass API for landmarks...")
+    headers = {
+        "User-Agent": "outrun-the-grid/1.0 (github.com/hberube/outrun-the-grid)",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
     try:
-        resp = requests.post(overpass_url, data={"data": query}, timeout=40)
+        resp = requests.post(overpass_url, data={"data": query}, headers=headers, timeout=40)
         resp.raise_for_status()
     except requests.RequestException as e:
         print(f"Warning: Overpass query failed ({e}). Writing empty landmarks.json.")

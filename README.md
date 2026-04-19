@@ -48,13 +48,16 @@ This writes `data/route_data.json` and `data/landmarks.json`. These files are gi
 
 ### 4. Set your YouTube video ID
 
-Open `js/app.js` and update the constant at the top:
+Open `config.json` and update `videoId`:
 
-```js
-const VIDEO_ID = "your_video_id_here";  // e.g. "dQw4w9WgXcQ"
+```json
+{
+  "videoId": "your_video_id_here",
+  "landmarkWindowSeconds": 2
+}
 ```
 
-The video ID is the string after `?v=` in the YouTube watch URL.
+The video ID is the string after `?v=` in the YouTube watch URL (e.g. `https://youtube.com/watch?v=abc123` → `"abc123"`).
 
 ### 5. Serve locally
 
@@ -82,9 +85,9 @@ This project is designed to be reused. To adapt it for a different run:
 
 | What to change | Where |
 |---|---|
-| YouTube video | `VIDEO_ID` constant in `js/app.js` |
+| YouTube video | `videoId` in `config.json` |
 | GPS data | Re-run `scripts/build.py` with a new `.gpx` |
-| Landmark trigger window | `LANDMARK_WINDOW` constant in `js/app.js` (seconds, default `2`) |
+| Landmark trigger window | `landmarkWindowSeconds` in `config.json` (default `2`) |
 | Map style / colors | `css/style.css` CSS variables at the top |
 
 ---

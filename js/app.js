@@ -1,11 +1,6 @@
-// ── Config ─────────────────────────────────────────────────────────────────
-// Replace with your YouTube video ID (the part after ?v= in the watch URL).
-const VIDEO_ID = "dQw4w9WgXcQ";
-
-// How many seconds ahead/behind a landmark timestamp triggers the card.
-const LANDMARK_WINDOW = 2;
-
 // ── State ──────────────────────────────────────────────────────────────────
+let VIDEO_ID = null;
+let LANDMARK_WINDOW = 2;
 let ytPlayer = null;
 let route = [];
 let landmarks = [];
@@ -18,16 +13,22 @@ let marker = null;
 // ── Data loading ───────────────────────────────────────────────────────────
 async function loadData() {
   try {
-    const [routeResp, landmarksResp] = await Promise.all([
+    const [configResp, routeResp, landmarksResp] = await Promise.all([
+      fetch("config.json"),
       fetch("data/route_data.json"),
       fetch("data/landmarks.json"),
     ]);
+    const config = await configResp.json();
+    VIDEO_ID = config.videoId;
+    LANDMARK_WINDOW = config.landmarkWindowSeconds ?? 2;
     route = await routeResp.json();
     landmarks = await landmarksResp.json();
   } catch (e) {
     console.warn("Could not load data files:", e.message);
   }
+  configReady = true;
   initMap();
+  tryInitPlayer();
 }
 
 // ── Map ────────────────────────────────────────────────────────────────────
@@ -150,18 +151,21 @@ function showLandmarkCard(lm) {
 }
 
 // ── YouTube IFrame API callback ────────────────────────────────────────────
-function onYouTubeIframeAPIReady() {
+let ytApiReady = false;
+let configReady = false;
+
+function tryInitPlayer() {
+  if (!ytApiReady || !configReady || !VIDEO_ID) return;
   ytPlayer = new YT.Player("player", {
     videoId: VIDEO_ID,
-    playerVars: {
-      playsinline: 1,
-      rel: 0,
-      modestbranding: 1,
-    },
-    events: {
-      onStateChange: onPlayerStateChange,
-    },
+    playerVars: { playsinline: 1, rel: 0, modestbranding: 1 },
+    events: { onStateChange: onPlayerStateChange },
   });
+}
+
+function onYouTubeIframeAPIReady() {
+  ytApiReady = true;
+  tryInitPlayer();
 }
 
 function onPlayerStateChange(event) {
