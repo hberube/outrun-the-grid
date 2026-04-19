@@ -200,8 +200,12 @@ async function selectRun(run) {
   resetMap();
 
   // Switch or init YouTube player
-  if (ytPlayer && typeof ytPlayer.loadVideoById === "function") {
-    ytPlayer.loadVideoById(VIDEO_ID);
+  if (ytPlayer && playerReady) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+    ytPlayer.loadVideoById(run.videoId);
+  } else if (ytPlayer && !playerReady) {
+    pendingVideoId = run.videoId;  // deliver once onReady fires
   } else {
     tryInitPlayer();
   }
@@ -497,13 +501,25 @@ function showLandmarkCard(lm) {
 // ── YouTube IFrame API ─────────────────────────────────────────────────────
 let ytApiReady = false;
 let configReady = false;
+let playerReady = false;
+let pendingVideoId = null;
 
 function tryInitPlayer() {
   if (!ytApiReady || !configReady || !VIDEO_ID) return;
+  playerReady = false;
   ytPlayer = new YT.Player("player", {
     videoId: VIDEO_ID,
     playerVars: { playsinline: 1, rel: 0, modestbranding: 1 },
-    events: { onStateChange: onPlayerStateChange },
+    events: {
+      onReady: () => {
+        playerReady = true;
+        if (pendingVideoId) {
+          ytPlayer.loadVideoById(pendingVideoId);
+          pendingVideoId = null;
+        }
+      },
+      onStateChange: onPlayerStateChange,
+    },
   });
 }
 
