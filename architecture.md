@@ -1,41 +1,48 @@
 # Architecture
 
-Outrun the Grid has two separate layers. The build layer runs once locally; the runtime layer runs in any browser with no server.
+Outrun the Grid has two separate layers. The build layer runs once locally per run; the runtime layer runs in any browser with no server.
 
 ---
 
-## Build Layer (local Python) — current
+## Build Layer (local Python)
 
 ```text
 your_run.gpx
      │
      ▼
-scripts/build.py
+scripts/build.py  ←── ANTHROPIC_API_KEY (optional, env var only)
      │
-     └─▶ data/route_data.json   [{t, lat, lon, pace, ele}, ...]
+     ├─▶ data/runs/{id}/route_data.json   [{t, lat, lon, pace, ele}, ...]
+     └─▶ data/runs/{id}/landmarks.json    [{t, name, lat, lon, source, summary, link}, ...]
 ```
 
-**`scripts/build.py`** does one thing: parse the GPX.
+**`scripts/build.py`** takes a `.gpx` file and a `--id` slug and produces two JSON files:
 
-1. **GPX parsing** — uses `gpxpy` to walk every track point and compute:
-   - `t`: seconds elapsed since the first point
-   - `lat`, `lon`: coordinates (with Insta360 sign-fix applied if needed)
-   - `pace`: min/km, derived from time delta ÷ haversine distance
+1. **GPX parsing** (`parse_gpx`) — walks every track point:
+   - `t`: seconds since first point
+   - `lat`, `lon`: coordinates (Insta360 sign-fix applied if needed)
+   - `pace`: min/km from time delta ÷ haversine distance
    - `ele`: elevation in meters
 
-**Known quirk:** Insta360 Studio's GPX exporter drops the negative sign on longitudes in the western hemisphere. The script compares the `<bounds>` metadata sign to the first track point and negates all longitudes if they disagree.
+2. **Insta360 longitude fix** — compares `gpx.bounds.max_longitude` sign to `points[0].longitude`; negates all longitudes if they disagree (western hemisphere bug in Insta360 Studio GPX export)
 
-**Output files are gitignored.** They contain personal GPS data and are regenerated per run.
+3. **Overpass landmark fetch** (`fetch_overpass_landmarks`) — POIs with `amenity`, `tourism`, `historic`, or `leisure` tags within 50m of the route bbox; deduplicates within 5-second buckets
+
+4. **Wikipedia enrichment** (`fetch_wikipedia_info`) — fetches intro extract by landmark name; falls back to Wikipedia search if direct lookup misses
+
+5. **Claude Haiku summarization** (`summarize_with_claude`) — if `ANTHROPIC_API_KEY` is set, compresses the Wikipedia text to 2 conversational sentences using `claude-haiku-4-5-20251001`; key never written to any file
+
+Both output files are committed to the repo (`data/runs/` is not gitignored). Raw `.gpx` files are gitignored.
 
 ---
 
-## Runtime Layer (static browser) — current
+## Runtime Layer (static browser)
 
 ```text
-Browser
+Browser boot
   │
-  ├── fetch config.json            ← videoId, landmarkWindow, landmarkSources
-  ├── fetch data/route_data.json
+  ├── fetch config.json            ← landmarkWindowSeconds, landmarkSources
+  ├── fetch runs.json              ← playlist of runs (id, name, date, distance, videoId, gpx)
   │
   ├── Leaflet.js (OpenStreetMap)   ← route polyline + neon marker
   └── YouTube IFrame API           ← video player
@@ -44,57 +51,101 @@ Browser
                                       move marker
                                       update HUD (pace, ele, time)
                                       check & fire landmark cards
+                                      update active legend + transcript row
 
-  Landmark fetch (non-blocking, after map init):
-  ├── localStorage hit?  ──yes──▶ use cache
-  └── no ─▶ fetch Overpass API + Wikipedia Geosearch in parallel
-            │
-            └──▶ deduplicate → cache in localStorage (keyed to route fingerprint)
-                               plot pins on map
+  Per-run data (on selectRun):
+  ├── fetch data/runs/{id}/route_data.json
+  ├── fetch data/runs/{id}/landmarks.json   ←── static (pre-built summaries)
+  │     └── 404? → fetch Overpass + Wikipedia live → cache in localStorage
+  └── render map, legend, transcript
 ```
 
 ### Boot sequence
 
-`config.json` and `route_data.json` are fetched in parallel on load. The YouTube player is created only after both the IFrame API script fires `onYouTubeIframeAPIReady` **and** the config fetch resolves (so `VIDEO_ID` is available). Whichever completes last triggers `tryInitPlayer()`.
+`config.json` and `runs.json` are fetched in parallel. The YouTube player is created exactly once — after both the IFrame API script fires `onYouTubeIframeAPIReady` **and** the config fetch resolves. A `|| ytPlayer` guard in `tryInitPlayer` prevents double-creation.
 
-Landmark fetching is non-blocking — the map and player initialize immediately; landmarks load and appear on the map in the background.
+`selectRun(runs[0])` is called automatically after boot to load the first run.
+
+### Run switching
+
+`selectRun(run)` is the single entry point for loading any run:
+1. Fetch `route_data.json` for the run
+2. `resetMap()` — removes old route polyline, pins, and marker layers
+3. Switch YouTube video:
+   - If player ready: `stopVideo()` → 150ms delay → `loadVideoById()` + `setSize()` (avoids black-screen rendering bug)
+   - If player not yet ready: store `pendingVideoId`; delivered in `onReady`
+4. Fetch landmarks (static file first, live fetch fallback)
+5. Rebuild legend and transcript
 
 ### Sync loop
 
 Every 250ms while playing:
-1. Read `ytPlayer.getCurrentTime()`
+1. `ytPlayer.getCurrentTime()` → `t`
 2. Binary-search `route_data` on `t` — O(log n)
-3. Move the Leaflet marker
+3. Move Leaflet marker to `[pt.lat, pt.lon]`
 4. Update HUD (pace, elevation, elapsed time)
-5. Check landmarks: if any `lm.t` is within ±`landmarkWindowSeconds` and hasn't fired yet → show overlay card for 3.5s
+5. Check landmarks: any `lm.t` within ±`landmarkWindowSeconds` not yet shown → `showLandmarkCard(lm)`
+6. Update active legend row and transcript row (both auto-scroll)
 
-A 500ms poll detects seeks (Δt > 3s) and clears shown-landmark state so cards re-trigger correctly after scrubbing.
+`showLandmarkCard` also triggers:
+- Map `flyTo(lm coords, zoom 17)` — returns to route bounds after 6s via `setTimeout`
+- `speakLandmark(lm)` — queued via promise chain; name then summary; checks `voiceEnabled` before each step
 
-### Landmark cache
+A 500ms poll detects seeks (Δt > 3s) and clears `shownLandmarks` so cards re-trigger after scrubbing.
 
-Cache key: `otg_lm_{lat0}_{lon0}_{latMid}_{latEnd}_{pointCount}` stored in `localStorage`. To force a re-fetch, run `localStorage.clear()` in the browser console.
+### Voice narration queue
+
+```text
+speakLandmark(lm)
+  └── speakQueue = speakQueue.then(async () => {
+        await speakUtterance(lm.name)      ← waits for onend
+        info = await fetchLandmarkInfo(lm)
+        await speakUtterance(info.text)    ← waits for onend
+      })
+```
+
+Each landmark runs fully before the next starts. `cancelSpeech()` calls `speechSynthesis.cancel()` and resets `speakQueue` to `Promise.resolve()`.
+
+### Landmark info resolution
+
+`fetchLandmarkInfo(lm)` priority order:
+1. `dykCache` (in-memory, cleared on run switch)
+2. `lm.summary` (pre-built by `build.py` via Claude — instant)
+3. Direct Wikipedia extract by name
+4. Wikipedia search → extract
+5. Fallback text
+
+### Landmark cache (live fetch path)
+
+Cache key: `otg_lm_v2_{lat0}_{lon0}_{latMid}_{latEnd}_{pointCount}` in `localStorage`. Bump `CACHE_VERSION` in `app.js` to force re-fetch across all users.
+
+Wikipedia summary cache: `otg_summary_v1_{landmarkName}` in `localStorage`.
 
 ---
 
-## Planned Build Layer Additions
+## File structure
 
-Future phases will expand `build.py` output:
-
-```text
-your_run.gpx
-(optional) ghost_run.gpx
-     │
-     ▼
-scripts/build.py
-     │
-     ├─▶ data/route_data.json   [{t, lat, lon, pace, ele, gradient}, ...]   ← add gradient
-     ├─▶ data/ghost_data.json   [{t, lat, lon, pace}, ...]                  ← Phase 4
-     └─▶ data/narrative.json    [{t, title, text}, ...]                     ← Phase 3 (AI)
 ```
-
-- **`gradient`** — percent grade per point, computed from elevation delta ÷ distance. Used to identify Boss Zones (steep climbs) in the browser.
-- **`ghost_data.json`** — second runner's GPX parsed into the same format, enabling co-op overlay.
-- **`narrative.json`** — chapter titles and commentary generated by Claude at build time from pace/elevation segments, timestamped to the route.
+outrun-the-grid/
+├── scripts/
+│   └── build.py              # GPX → route_data.json + landmarks.json (with Claude summaries)
+├── data/
+│   └── runs/
+│       ├── run-eve-6k-041126/
+│       │   ├── route_data.json
+│       │   └── landmarks.json   ← committed; regenerate with build.py
+│       └── camb-classic-5k-spring/
+│           ├── route_data.json
+│           └── landmarks.json
+├── css/
+│   └── style.css             # Synthwave theme + responsive
+├── js/
+│   └── app.js                # All runtime logic
+├── index.html
+├── runs.json                 # Playlist manifest
+├── config.json               # landmarkWindowSeconds, landmarkSources
+└── requirements.txt          # gpxpy, requests, anthropic
+```
 
 ---
 
@@ -104,6 +155,25 @@ scripts/build.py
 |---|---|---|
 | [Leaflet.js 1.9](https://leafletjs.com) | CDN | Map, no API key needed |
 | [OpenStreetMap](https://www.openstreetmap.org) | Tile CDN | Map tiles |
-| [YouTube IFrame API](https://developers.google.com/youtube/iframe_api_reference) | Script tag | Video + time access |
-| [Overpass API](https://overpass-api.de) | `fetch()` in browser | OSM POI landmarks |
-| [Wikipedia Geosearch](https://www.mediawiki.org/wiki/API:Geosearch) | `fetch()` in browser | Wikipedia article landmarks |
+| [YouTube IFrame API](https://developers.google.com/youtube/iframe_api_reference) | Script tag | Video + `getCurrentTime()` |
+| [Overpass API](https://overpass-api.de) | `fetch()` in browser or `requests` in build | OSM POI landmarks |
+| [Wikipedia API](https://en.wikipedia.org/w/api.php) | `fetch()` in browser or `requests` in build | Article extracts |
+| [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API) | Native browser | Voice narration |
+| [Claude Haiku](https://anthropic.com) | `anthropic` Python SDK at build time | 2-sentence landmark summaries |
+
+---
+
+## Planned Build Layer Additions
+
+```text
+your_run.gpx
+(optional) ghost_run.gpx
+     │
+     ▼
+scripts/build.py
+     │
+     ├─▶ data/runs/{id}/route_data.json   [{t, lat, lon, pace, ele, gradient}, ...]  ← add gradient
+     ├─▶ data/runs/{id}/landmarks.json    (current)
+     ├─▶ data/runs/{id}/narrative.json    [{t, title, text}, ...]                    ← Phase 3 (AI chapters)
+     └─▶ data/runs/{id}/ghost_data.json   [{t, lat, lon, pace}, ...]                 ← Phase 4
+```
