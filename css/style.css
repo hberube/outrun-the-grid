@@ -330,7 +330,8 @@ html, body {
 
 /* ── Map ── */
 #map {
-  flex: 1;
+  flex: none;
+  height: 200px;
   border: 1px solid var(--pink);
   box-shadow: var(--glow-p);
   /* Retro grid overlay */
@@ -352,6 +353,27 @@ html, body {
   background: var(--mid);
   border: 1px solid var(--pink);
   justify-content: center;
+  align-items: center;
+}
+
+.voice-btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--dim);
+  color: var(--dim);
+  font-family: inherit;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  padding: 0.15rem 0.4rem;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 0.2s, border-color 0.2s, text-shadow 0.2s;
+}
+
+.voice-btn.active {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  text-shadow: var(--glow-c);
 }
 
 .hud-item { display: flex; gap: 0.5rem; align-items: baseline; }
@@ -544,7 +566,8 @@ html, body {
   }
 
   #map {
-    min-height: 50vh;
+    height: 35vh;
+    min-height: 160px;
     flex: none;
   }
 

@@ -11,6 +11,40 @@ let map = null;
 let marker = null;
 let activeRunId = null;
 let runs = [];
+let routeBounds = null;
+let zoomResetTimer = null;
+
+// ── Voice narration ────────────────────────────────────────────────────────
+let voiceEnabled = localStorage.getItem("otg_voice") === "true";
+
+function initVoiceBtn() {
+  const btn = document.getElementById("voice-btn");
+  if (!btn) return;
+  btn.classList.toggle("active", voiceEnabled);
+  btn.addEventListener("click", () => {
+    voiceEnabled = !voiceEnabled;
+    localStorage.setItem("otg_voice", voiceEnabled);
+    btn.classList.toggle("active", voiceEnabled);
+    if (!voiceEnabled) speechSynthesis.cancel();
+  });
+}
+
+function speakLandmark(lm) {
+  if (!voiceEnabled || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const intro = new SpeechSynthesisUtterance(lm.name);
+  intro.rate = 0.95;
+  speechSynthesis.speak(intro);
+  // Fetch and speak the DYK extract after the name
+  fetchLandmarkInfo(lm).then(info => {
+    if (!voiceEnabled || !info?.text) return;
+    const clean = info.text.replace(/\(.*?\)/g, "").replace(/\s+/g, " ").trim();
+    const excerpt = clean.length > 400 ? clean.slice(0, 400) + "…" : clean;
+    const body = new SpeechSynthesisUtterance(excerpt);
+    body.rate = 0.95;
+    speechSynthesis.speak(body);
+  });
+}
 
 // ── Cache key ──────────────────────────────────────────────────────────────
 // Bump this when the landmark schema changes to auto-bust stale caches.
@@ -212,6 +246,8 @@ async function selectRun(run) {
   shownLandmarks.clear();
   activeLegendT = null;
   dykCache.clear();
+  if (zoomResetTimer) { clearTimeout(zoomResetTimer); zoomResetTimer = null; }
+  speechSynthesis.cancel();
 
   // Update picker active state
   document.querySelectorAll(".run-card").forEach(c => {
@@ -249,7 +285,8 @@ function resetMap() {
 
   const latlngs = route.map(p => [p.lat, p.lon]);
   routeLayer = L.polyline(latlngs, { color: "#66fcf1", weight: 3, opacity: 0.85 }).addTo(map);
-  map.fitBounds(routeLayer.getBounds(), { padding: [24, 24] });
+  routeBounds = routeLayer.getBounds();
+  map.fitBounds(routeBounds, { padding: [24, 24] });
 
   const neonIcon = L.divIcon({
     className: "",
@@ -491,12 +528,23 @@ function showLandmarkCard(lm) {
   const iconEl  = document.querySelector(".landmark-icon");
 
   nameEl.textContent = lm.name.toUpperCase();
-  // Wikipedia landmarks get a purple tint; OSM landmarks get default pink
   card.dataset.source = lm.source ?? "osm";
   if (iconEl) iconEl.textContent = lm.source === "wikipedia" ? "◉" : "◈";
 
   card.classList.remove("hidden");
   setTimeout(() => card.classList.add("hidden"), 3500);
+
+  // Zoom map in to landmark, then fly back to full route after 6s
+  if (map && lm.lat != null && lm.lon != null) {
+    if (zoomResetTimer) { clearTimeout(zoomResetTimer); zoomResetTimer = null; }
+    map.flyTo([lm.lat, lm.lon], 17, { animate: true, duration: 1.2 });
+    zoomResetTimer = setTimeout(() => {
+      if (map && routeBounds) map.flyToBounds(routeBounds, { padding: [24, 24], duration: 1.5 });
+      zoomResetTimer = null;
+    }, 6000);
+  }
+
+  speakLandmark(lm);
 }
 
 // ── YouTube IFrame API ─────────────────────────────────────────────────────
@@ -587,4 +635,5 @@ function initRunsPicker() {
 // ── Boot ───────────────────────────────────────────────────────────────────
 initDidYouKnow();
 initRunsPicker();
+initVoiceBtn();
 loadData();
