@@ -480,6 +480,77 @@ html, body {
   white-space: nowrap;
 }
 
+/* ── Narration transcript ── */
+#transcript {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--pink);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.transcript-header {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+  padding: 0.3rem 0.6rem;
+  flex-shrink: 0;
+}
+
+#transcript-list {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pink) var(--mid);
+}
+
+#transcript-list::-webkit-scrollbar       { width: 4px; }
+#transcript-list::-webkit-scrollbar-track { background: var(--mid); }
+#transcript-list::-webkit-scrollbar-thumb { background: var(--pink); border-radius: 2px; }
+
+.transcript-item {
+  padding: 0.55rem 0.6rem;
+  border-left: 2px solid transparent;
+  opacity: 0.3;
+  transition: opacity 0.4s, border-color 0.3s;
+}
+
+.transcript-item.passed {
+  opacity: 0.5;
+}
+
+.transcript-item.active {
+  opacity: 1;
+  border-left-color: var(--cyan);
+}
+
+.transcript-ts {
+  font-size: 0.6rem;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.transcript-name {
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--cyan);
+  margin-bottom: 0.25rem;
+}
+
+.transcript-item.active .transcript-name {
+  text-shadow: var(--glow-c);
+}
+
+.transcript-text {
+  font-size: 0.72rem;
+  color: var(--fg);
+  line-height: 1.5;
+  margin: 0;
+}
+
 /* ── Leaflet custom marker ── */
 .neon-dot {
   width: 14px;
@@ -593,6 +664,9 @@ html, body {
   }
   .legend-ts  { font-size: 0.72rem; }
   .legend-name { font-size: 0.76rem; }
+
+  /* Transcript hidden on mobile — not enough vertical space */
+  #transcript { display: none; }
 
   /* DYK: bottom sheet */
   .dyk-panel {

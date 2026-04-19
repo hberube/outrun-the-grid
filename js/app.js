@@ -299,6 +299,7 @@ async function selectRun(run) {
   // Load landmarks — prefer pre-built static file, fall back to dynamic fetch
   landmarks = [];
   buildLegend([]);
+  buildTranscript([]);
   if (route.length) {
     try {
       const lmResp = await fetch(`data/runs/${run.id}/landmarks.json`);
@@ -313,6 +314,7 @@ async function selectRun(run) {
 
     addLandmarkPins();
     buildLegend(landmarks);
+    buildTranscript(landmarks);
   }
 }
 
@@ -505,24 +507,67 @@ function initDidYouKnow() {
 }
 
 let activeLegendT = null;
+let activeTranscriptT = null;
 
 function updateActiveLegendItem(t) {
-  // Find the last landmark whose timestamp has been passed
   let best = null;
   for (const lm of landmarks) {
     if (lm.t <= t) best = lm;
     else break;
   }
   const nextT = best ? best.t : null;
-  if (nextT === activeLegendT) return; // no change
-  activeLegendT = nextT;
+  if (nextT !== activeLegendT) {
+    activeLegendT = nextT;
+    const list = document.getElementById("legend-list");
+    if (list) {
+      list.querySelectorAll(".legend-item").forEach(li => {
+        const active = Number(li.dataset.t) === nextT;
+        li.classList.toggle("active", active);
+        if (active) li.scrollIntoView({ block: "nearest" });
+      });
+    }
+  }
 
-  const list = document.getElementById("legend-list");
+  if (nextT !== activeTranscriptT) {
+    activeTranscriptT = nextT;
+    const tlist = document.getElementById("transcript-list");
+    if (tlist) {
+      tlist.querySelectorAll(".transcript-item").forEach(el => {
+        const itemT = Number(el.dataset.t);
+        el.classList.toggle("active", itemT === nextT);
+        el.classList.toggle("passed", itemT < (nextT ?? Infinity) && itemT !== nextT);
+        if (itemT === nextT) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      });
+    }
+  }
+}
+
+function buildTranscript(lms) {
+  const list = document.getElementById("transcript-list");
   if (!list) return;
-  list.querySelectorAll(".legend-item").forEach(li => {
-    const active = Number(li.dataset.t) === nextT;
-    li.classList.toggle("active", active);
-    if (active) li.scrollIntoView({ block: "nearest" });
+  list.innerHTML = "";
+
+  lms.forEach(lm => {
+    const el = document.createElement("div");
+    el.className = "transcript-item";
+    el.dataset.t = lm.t;
+
+    const m = Math.floor(lm.t / 60);
+    const s = Math.floor(lm.t % 60).toString().padStart(2, "0");
+
+    el.innerHTML = `
+      <span class="transcript-ts">${m}:${s}</span>
+      <div class="transcript-name">${lm.name.toUpperCase()}</div>
+      <p class="transcript-text">…</p>
+    `;
+
+    // Fill text asynchronously
+    fetchLandmarkInfo(lm).then(info => {
+      const p = el.querySelector(".transcript-text");
+      if (p && info?.text) p.textContent = info.text;
+    });
+
+    list.appendChild(el);
   });
 }
 
