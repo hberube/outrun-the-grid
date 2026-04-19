@@ -277,7 +277,13 @@ async function selectRun(run) {
   if (ytPlayer && playerReady) {
     clearInterval(syncInterval);
     syncInterval = null;
-    ytPlayer.loadVideoById(run.videoId);
+    ytPlayer.stopVideo();
+    setTimeout(() => {
+      ytPlayer.loadVideoById(run.videoId);
+      // Force layout recalc to fix black-screen-with-audio YouTube bug
+      const wrapper = document.getElementById("player-wrapper");
+      if (wrapper) ytPlayer.setSize(wrapper.offsetWidth, wrapper.offsetHeight);
+    }, 150);
   } else if (ytPlayer && !playerReady) {
     pendingVideoId = run.videoId;  // deliver once onReady fires
   } else {
