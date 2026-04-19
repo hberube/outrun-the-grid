@@ -94,28 +94,39 @@ html, body {
   height: 100% !important;
 }
 
-/* ── Landmark card overlay ── */
+/* ── Landmark card overlay (fixed, spans full viewport) ── */
 .landmark-card {
-  position: absolute;
-  bottom: 1.5rem;
+  position: fixed;
+  bottom: 2.5rem;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(11, 12, 16, 0.88);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(6, 7, 9, 0.92);
   border: 1px solid var(--pink);
-  box-shadow: var(--glow-p);
+  box-shadow: var(--glow-p), 0 0 40px #ff2d7833;
   color: var(--cyan);
-  font-size: 0.85rem;
-  letter-spacing: 0.15em;
-  padding: 0.45rem 1.1rem;
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+  padding: 0.65rem 1.6rem;
   white-space: nowrap;
-  animation: slide-up 0.3s ease;
-  z-index: 10;
+  animation: slide-up 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 1000;
+  text-transform: uppercase;
 }
 
 .landmark-card.hidden { display: none; }
 
+.landmark-icon {
+  color: var(--pink);
+  font-size: 1.1rem;
+  text-shadow: var(--glow-p);
+  flex-shrink: 0;
+}
+
 @keyframes slide-up {
-  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
