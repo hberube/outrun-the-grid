@@ -274,18 +274,21 @@ async function selectRun(run) {
   resetMap();
 
   // Switch or init YouTube player
-  if (ytPlayer && playerReady) {
+  if (ytPlayer) {
     clearInterval(syncInterval);
     syncInterval = null;
-    ytPlayer.stopVideo();
-    setTimeout(() => {
-      ytPlayer.loadVideoById(run.videoId);
-      // Force layout recalc to fix black-screen-with-audio YouTube bug
-      const wrapper = document.getElementById("player-wrapper");
-      if (wrapper) ytPlayer.setSize(wrapper.offsetWidth, wrapper.offsetHeight);
-    }, 150);
-  } else if (ytPlayer && !playerReady) {
-    pendingVideoId = run.videoId;  // deliver once onReady fires
+    // Destroy and recreate — more reliable than loadVideoById across browsers
+    ytPlayer.destroy();
+    ytPlayer = null;
+    playerReady = false;
+    // YouTube destroy() removes the iframe; put the target div back
+    const wrapper = document.getElementById("player-wrapper");
+    if (wrapper) {
+      const div = document.createElement("div");
+      div.id = "player";
+      wrapper.appendChild(div);
+    }
+    setTimeout(tryInitPlayer, 50);
   } else {
     tryInitPlayer();
   }
