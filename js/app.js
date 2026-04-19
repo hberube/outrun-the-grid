@@ -50,26 +50,41 @@ function initVoiceBtn() {
     voiceEnabled = !voiceEnabled;
     localStorage.setItem("otg_voice", voiceEnabled);
     btn.classList.toggle("active", voiceEnabled);
-    if (!voiceEnabled) speechSynthesis.cancel();
+    if (!voiceEnabled) cancelSpeech();
   });
   // Voices may load asynchronously (Chrome)
   pickVoice();
   speechSynthesis.onvoiceschanged = pickVoice;
 }
 
+let speakQueue = Promise.resolve();
+
+function speakUtterance(text) {
+  return new Promise(resolve => {
+    const utt = new SpeechSynthesisUtterance(text);
+    applyVoice(utt);
+    utt.onend = resolve;
+    utt.onerror = resolve;
+    speechSynthesis.speak(utt);
+  });
+}
+
+function cancelSpeech() {
+  speechSynthesis.cancel();
+  speakQueue = Promise.resolve();
+}
+
 function speakLandmark(lm) {
   if (!voiceEnabled || !window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  const intro = new SpeechSynthesisUtterance(lm.name);
-  applyVoice(intro);
-  speechSynthesis.speak(intro);
-  fetchLandmarkInfo(lm).then(info => {
+  speakQueue = speakQueue.then(async () => {
+    if (!voiceEnabled) return;
+    await speakUtterance(lm.name);
+    if (!voiceEnabled) return;
+    const info = await fetchLandmarkInfo(lm);
     if (!voiceEnabled || !info?.text) return;
     const clean = info.text.replace(/\(.*?\)/g, "").replace(/\s+/g, " ").trim();
     const excerpt = clean.length > 400 ? clean.slice(0, 400) + "…" : clean;
-    const body = new SpeechSynthesisUtterance(excerpt);
-    applyVoice(body);
-    speechSynthesis.speak(body);
+    await speakUtterance(excerpt);
   });
 }
 
@@ -274,7 +289,7 @@ async function selectRun(run) {
   activeLegendT = null;
   dykCache.clear();
   if (zoomResetTimer) { clearTimeout(zoomResetTimer); zoomResetTimer = null; }
-  speechSynthesis.cancel();
+  cancelSpeech();
 
   // Update picker active state
   document.querySelectorAll(".run-card").forEach(c => {
