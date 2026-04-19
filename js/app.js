@@ -316,7 +316,9 @@ function buildLegend(lms) {
   const toggle = document.getElementById("legend-toggle");
   const legend = document.getElementById("legend");
   if (toggle && legend) {
+    toggle.onclick = null;
     toggle.addEventListener("click", () => legend.classList.toggle("collapsed"));
+    if (window.innerWidth <= 700) legend.classList.add("collapsed");
   }
 }
 
