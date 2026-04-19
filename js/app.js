@@ -177,10 +177,8 @@ async function loadData() {
   buildRunsPicker();
   initMap();
 
-  // Load first run by default
+  // Load first run by default (also calls tryInitPlayer internally)
   if (runs.length) await selectRun(runs[0]);
-
-  tryInitPlayer();
 }
 
 async function selectRun(run) {
@@ -506,7 +504,7 @@ let playerReady = false;
 let pendingVideoId = null;
 
 function tryInitPlayer() {
-  if (!ytApiReady || !configReady || !VIDEO_ID) return;
+  if (!ytApiReady || !configReady || !VIDEO_ID || ytPlayer) return;
   playerReady = false;
   ytPlayer = new YT.Player("player", {
     videoId: VIDEO_ID,
