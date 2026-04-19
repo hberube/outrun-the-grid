@@ -118,6 +118,16 @@ html, body {
 
 .landmark-card.hidden { display: none; }
 
+/* Wikipedia landmarks get a purple accent */
+.landmark-card[data-source="wikipedia"] {
+  border-color: #c084fc;
+  box-shadow: 0 0 8px #c084fc, 0 0 40px #c084fc33;
+}
+.landmark-card[data-source="wikipedia"] .landmark-icon {
+  color: #c084fc;
+  text-shadow: 0 0 8px #c084fc;
+}
+
 .landmark-icon {
   color: var(--pink);
   font-size: 1.1rem;
