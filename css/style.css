@@ -181,6 +181,95 @@ html, body {
   min-width: 4ch;
 }
 
+/* ── Landmarks legend ── */
+#legend {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--pink);
+  background: var(--darker);
+  flex-shrink: 0;
+}
+
+.legend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+}
+
+#legend-toggle {
+  background: none;
+  border: none;
+  color: var(--cyan);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0 0.2rem;
+  transition: transform 0.2s ease;
+}
+
+#legend.collapsed #legend-toggle { transform: rotate(-180deg); }
+#legend.collapsed #legend-list   { display: none; }
+
+#legend-list {
+  list-style: none;
+  max-height: 160px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pink) var(--mid);
+}
+
+#legend-list::-webkit-scrollbar       { width: 4px; }
+#legend-list::-webkit-scrollbar-track { background: var(--mid); }
+#legend-list::-webkit-scrollbar-thumb { background: var(--pink); border-radius: 2px; }
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.28rem 0.6rem;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+.legend-item:hover {
+  background: rgba(102, 252, 241, 0.06);
+  color: var(--cyan);
+}
+
+.legend-item.active {
+  border-left-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(102, 252, 241, 0.08);
+}
+
+.legend-ts {
+  font-size: 0.68rem;
+  color: var(--dim);
+  min-width: 3.5ch;
+  flex-shrink: 0;
+}
+
+.legend-icon {
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.legend-icon.osm       { color: var(--pink); }
+.legend-icon.wikipedia { color: #c084fc; }
+
+.legend-name {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ── Leaflet custom marker ── */
 .neon-dot {
   width: 14px;

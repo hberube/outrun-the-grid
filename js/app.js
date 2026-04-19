@@ -176,6 +176,7 @@ async function loadData() {
   if (route.length) {
     landmarks = await loadLandmarks(route, LANDMARK_SOURCES);
     addLandmarkPins();
+    buildLegend(landmarks);
   }
 }
 
@@ -213,6 +214,68 @@ function addLandmarkPins() {
   });
 }
 
+// ── Landmarks legend ───────────────────────────────────────────────────────
+function buildLegend(lms) {
+  const list = document.getElementById("legend-list");
+  if (!list) return;
+  list.innerHTML = "";
+
+  lms.forEach(lm => {
+    const li = document.createElement("li");
+    li.className = "legend-item";
+    li.dataset.t = lm.t;
+
+    const m = Math.floor(lm.t / 60);
+    const s = Math.floor(lm.t % 60).toString().padStart(2, "0");
+    const srcClass = lm.source === "wikipedia" ? "wikipedia" : "osm";
+    const icon = lm.source === "wikipedia" ? "◉" : "◈";
+
+    li.innerHTML = `
+      <span class="legend-ts">${m}:${s}</span>
+      <span class="legend-icon ${srcClass}">${icon}</span>
+      <span class="legend-name">${lm.name}</span>
+    `;
+
+    li.addEventListener("click", () => {
+      if (ytPlayer && typeof ytPlayer.seekTo === "function") {
+        ytPlayer.seekTo(lm.t, true);
+        shownLandmarks.clear();
+      }
+    });
+
+    list.appendChild(li);
+  });
+
+  // Toggle button
+  const toggle = document.getElementById("legend-toggle");
+  const legend = document.getElementById("legend");
+  if (toggle && legend) {
+    toggle.addEventListener("click", () => legend.classList.toggle("collapsed"));
+  }
+}
+
+let activeLegendT = null;
+
+function updateActiveLegendItem(t) {
+  // Find the last landmark whose timestamp has been passed
+  let best = null;
+  for (const lm of landmarks) {
+    if (lm.t <= t) best = lm;
+    else break;
+  }
+  const nextT = best ? best.t : null;
+  if (nextT === activeLegendT) return; // no change
+  activeLegendT = nextT;
+
+  const list = document.getElementById("legend-list");
+  if (!list) return;
+  list.querySelectorAll(".legend-item").forEach(li => {
+    const active = Number(li.dataset.t) === nextT;
+    li.classList.toggle("active", active);
+    if (active) li.scrollIntoView({ block: "nearest" });
+  });
+}
+
 // ── Binary search ──────────────────────────────────────────────────────────
 function findClosestIndex(currentTime) {
   let lo = 0, hi = route.length - 1;
@@ -234,6 +297,7 @@ function onTick() {
   if (marker) marker.setLatLng([pt.lat, pt.lon]);
   updateHUD(pt, t);
   checkLandmarks(t);
+  updateActiveLegendItem(t);
 }
 
 // ── HUD ────────────────────────────────────────────────────────────────────
