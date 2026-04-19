@@ -41,23 +41,29 @@ pip install -r requirements.txt
 Export your run as a `.gpx` file from [Garmin Connect](https://connect.garmin.com) (Activity → Export GPX), then run:
 
 ```bash
-python scripts/build.py path/to/your_run.gpx
+python scripts/build.py path/to/your_run.gpx --id your-run-id
 ```
 
 This writes `data/route_data.json` and `data/landmarks.json`. These files are gitignored — regenerate them locally for each run.
 
-### 4. Set your YouTube video ID
+### 4. Register the run in `runs.json`
 
-Open `config.json` and update `videoId`:
+Add an entry to `runs.json`:
 
 ```json
-{
-  "videoId": "your_video_id_here",
-  "landmarkWindowSeconds": 2
-}
+[
+  {
+    "id": "my-run-id",
+    "name": "Sunday 10K",
+    "date": "2026-04-19",
+    "distance": "10K",
+    "videoId": "your_youtube_id",
+    "gpx": "your_run.gpx"
+  }
+]
 ```
 
-The video ID is the string after `?v=` in the YouTube watch URL (e.g. `https://youtube.com/watch?v=abc123` → `"abc123"`).
+The `id` must be a URL-safe slug (lowercase, hyphens). The video ID is the part after `?v=` in the YouTube watch URL.
 
 ### 5. Serve locally
 
@@ -85,8 +91,8 @@ This project is designed to be reused. To adapt it for a different run:
 
 | What to change | Where |
 |---|---|
-| YouTube video | `videoId` in `config.json` |
-| GPS data | Re-run `scripts/build.py` with a new `.gpx` |
+| Add a run | Add entry to `runs.json`, run `build.py --id` |
+| GPS data | Re-run `scripts/build.py path/to/run.gpx --id run-id` |
 | Landmark trigger window | `landmarkWindowSeconds` in `config.json` (default `2`) |
 | Map style / colors | `css/style.css` CSS variables at the top |
 

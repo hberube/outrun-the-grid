@@ -10,7 +10,16 @@
 <body>
   <header class="site-header">
     <span class="logo">OUTRUN THE GRID</span>
+    <button id="runs-btn" class="runs-btn">⏵ RUNS</button>
   </header>
+
+  <div id="runs-panel" class="runs-panel hidden">
+    <div class="runs-panel-header">
+      <span>// SELECT RUN</span>
+      <button id="runs-close" aria-label="Close">✕</button>
+    </div>
+    <div id="runs-list" class="runs-list"></div>
+  </div>
 
   <main class="dashboard">
     <!-- Left: video -->

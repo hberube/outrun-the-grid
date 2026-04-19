@@ -151,14 +151,16 @@ out body;
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Build route_data.json and landmarks.json from a GPX file.")
+    parser = argparse.ArgumentParser(description="Build route_data.json from a GPX file.")
     parser.add_argument("gpx_file", help="Path to Garmin .gpx export")
+    parser.add_argument("--id", dest="run_id", required=True,
+                        help="Run ID (must match the id field in runs.json, e.g. run-eve-6k)")
     args = parser.parse_args()
 
     if not os.path.isfile(args.gpx_file):
         sys.exit(f"File not found: {args.gpx_file}")
 
-    out_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+    out_dir = os.path.join(os.path.dirname(__file__), "..", "data", "runs", args.run_id)
     os.makedirs(out_dir, exist_ok=True)
 
     print(f"Parsing {args.gpx_file}...")
@@ -169,12 +171,6 @@ def main():
     with open(route_path, "w", encoding="utf-8") as f:
         json.dump(route, f, separators=(",", ":"))
     print(f"Wrote {route_path}")
-
-    landmarks = fetch_landmarks(route)
-    landmarks_path = os.path.join(out_dir, "landmarks.json")
-    with open(landmarks_path, "w", encoding="utf-8") as f:
-        json.dump(landmarks, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"Wrote {landmarks_path}")
 
 
 if __name__ == "__main__":

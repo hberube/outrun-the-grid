@@ -9,6 +9,8 @@ let shownLandmarks = new Set();
 let syncInterval = null;
 let map = null;
 let marker = null;
+let activeRunId = null;
+let runs = [];
 
 // ── Cache key ──────────────────────────────────────────────────────────────
 // Bump this when the landmark schema changes to auto-bust stale caches.
@@ -159,24 +161,63 @@ function setLandmarkStatus(msg) {
 // ── Data loading ───────────────────────────────────────────────────────────
 async function loadData() {
   try {
-    const [configResp, routeResp] = await Promise.all([
+    const [configResp, runsResp] = await Promise.all([
       fetch("config.json"),
-      fetch("data/route_data.json"),
+      fetch("runs.json"),
     ]);
     const config = await configResp.json();
-    VIDEO_ID = config.videoId;
     LANDMARK_WINDOW = config.landmarkWindowSeconds ?? 2;
     LANDMARK_SOURCES = config.landmarkSources ?? ["overpass", "wikipedia"];
-    route = await routeResp.json();
+    runs = await runsResp.json();
   } catch (e) {
-    console.warn("Could not load data files:", e.message);
+    console.warn("Could not load config/runs:", e.message);
   }
 
   configReady = true;
+  buildRunsPicker();
   initMap();
-  tryInitPlayer();
 
-  // Fetch landmarks after map is up (non-blocking)
+  // Load first run by default
+  if (runs.length) await selectRun(runs[0]);
+
+  tryInitPlayer();
+}
+
+async function selectRun(run) {
+  if (activeRunId === run.id) return;
+  activeRunId = run.id;
+  VIDEO_ID = run.videoId;
+
+  // Load route data
+  try {
+    const resp = await fetch(`data/runs/${run.id}/route_data.json`);
+    route = await resp.json();
+  } catch (e) {
+    console.warn("Could not load route data for", run.id, e.message);
+    route = [];
+  }
+
+  resetMap();
+
+  // Switch or init YouTube player
+  if (ytPlayer && typeof ytPlayer.loadVideoById === "function") {
+    ytPlayer.loadVideoById(VIDEO_ID);
+  } else {
+    tryInitPlayer();
+  }
+
+  resetHUD();
+  shownLandmarks.clear();
+  activeLegendT = null;
+
+  // Update picker active state
+  document.querySelectorAll(".run-card").forEach(c => {
+    c.classList.toggle("active", c.dataset.id === run.id);
+  });
+
+  // Fetch landmarks for this run
+  landmarks = [];
+  buildLegend([]);
   if (route.length) {
     landmarks = await loadLandmarks(route, LANDMARK_SOURCES);
     addLandmarkPins();
@@ -185,36 +226,53 @@ async function loadData() {
 }
 
 // ── Map ────────────────────────────────────────────────────────────────────
+let routeLayer = null;
+let pinsLayer = null;
+
 function initMap() {
-  const center = route.length ? [route[0].lat, route[0].lon] : [0, 0];
-  const zoom = route.length ? 15 : 2;
-
-  map = L.map("map", { zoomControl: true, attributionControl: false }).setView(center, zoom);
+  map = L.map("map", { zoomControl: true, attributionControl: false }).setView([0, 0], 2);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+}
 
-  if (route.length) {
-    const latlngs = route.map(p => [p.lat, p.lon]);
-    const routeLine = L.polyline(latlngs, { color: "#66fcf1", weight: 3, opacity: 0.85 }).addTo(map);
-    map.fitBounds(routeLine.getBounds(), { padding: [24, 24] });
+function resetMap() {
+  if (!map) return;
 
-    const neonIcon = L.divIcon({
-      className: "",
-      html: '<div class="neon-dot"></div>',
-      iconSize: [14, 14], iconAnchor: [7, 7],
-    });
-    marker = L.marker([route[0].lat, route[0].lon], { icon: neonIcon }).addTo(map);
-  }
+  // Remove old layers
+  if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
+  if (pinsLayer)  { map.removeLayer(pinsLayer);  pinsLayer = null; }
+  if (marker)     { map.removeLayer(marker);      marker = null; }
+
+  if (!route.length) return;
+
+  const latlngs = route.map(p => [p.lat, p.lon]);
+  routeLayer = L.polyline(latlngs, { color: "#66fcf1", weight: 3, opacity: 0.85 }).addTo(map);
+  map.fitBounds(routeLayer.getBounds(), { padding: [24, 24] });
+
+  const neonIcon = L.divIcon({
+    className: "",
+    html: '<div class="neon-dot"></div>',
+    iconSize: [14, 14], iconAnchor: [7, 7],
+  });
+  marker = L.marker([route[0].lat, route[0].lon], { icon: neonIcon }).addTo(map);
+}
+
+function resetHUD() {
+  document.getElementById("hud-pace").textContent = "--:--";
+  document.getElementById("hud-ele").textContent  = "---m";
+  document.getElementById("hud-time").textContent = "0:00";
 }
 
 function addLandmarkPins() {
   if (!map) return;
+  if (pinsLayer) { map.removeLayer(pinsLayer); pinsLayer = null; }
+  pinsLayer = L.layerGroup().addTo(map);
   landmarks.forEach(lm => {
     const color = lm.source === "wikipedia" ? "#c084fc" : "#ff2d78";
     L.circleMarker([lm.lat, lm.lon], {
       radius: 4, color, fillColor: color, fillOpacity: 0.85, weight: 1,
     })
       .bindTooltip(lm.name, { permanent: false, className: "lm-tip" })
-      .addTo(map);
+      .addTo(pinsLayer);
   });
 }
 
@@ -472,6 +530,42 @@ setInterval(() => {
   lastT = t;
 }, 500);
 
+// ── Runs picker ────────────────────────────────────────────────────────────
+function buildRunsPicker() {
+  const list = document.getElementById("runs-list");
+  if (!list) return;
+  list.innerHTML = "";
+
+  runs.forEach(run => {
+    const card = document.createElement("div");
+    card.className = "run-card";
+    card.dataset.id = run.id;
+
+    const thumb = `https://img.youtube.com/vi/${run.videoId}/mqdefault.jpg`;
+    card.innerHTML = `
+      <img class="run-thumb" src="${thumb}" alt="${run.name}" loading="lazy">
+      <div class="run-info">
+        <span class="run-name">${run.name}</span>
+        <span class="run-meta">${run.date} · ${run.distance}</span>
+      </div>
+    `;
+    card.addEventListener("click", () => {
+      selectRun(run);
+      document.getElementById("runs-panel").classList.add("hidden");
+    });
+    list.appendChild(card);
+  });
+}
+
+function initRunsPicker() {
+  const btn   = document.getElementById("runs-btn");
+  const panel = document.getElementById("runs-panel");
+  const close = document.getElementById("runs-close");
+  btn.addEventListener("click",  () => panel.classList.toggle("hidden"));
+  close.addEventListener("click", () => panel.classList.add("hidden"));
+}
+
 // ── Boot ───────────────────────────────────────────────────────────────────
 initDidYouKnow();
+initRunsPicker();
 loadData();
