@@ -94,6 +94,85 @@ html, body {
   height: 100% !important;
 }
 
+/* ── Did You Know panel ── */
+.dyk-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(480px, 90vw);
+  background: rgba(6, 7, 9, 0.97);
+  border: 1px solid var(--cyan);
+  box-shadow: var(--glow-c), 0 0 60px #66fcf122;
+  padding: 1.4rem 1.6rem 1.2rem;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  animation: dyk-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dyk-panel.hidden { display: none; }
+
+@keyframes dyk-in {
+  from { opacity: 0; transform: translate(-50%, -48%); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.dyk-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.7rem;
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.1rem 0.3rem;
+}
+.dyk-close:hover { color: var(--cyan); }
+
+.dyk-source {
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+.dyk-title {
+  font-size: 1rem;
+  font-weight: normal;
+  letter-spacing: 0.12em;
+  color: var(--cyan);
+  text-shadow: var(--glow-c);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.dyk-body {
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: var(--text);
+  margin: 0;
+}
+
+.dyk-body.loading {
+  color: var(--dim);
+  font-style: italic;
+}
+
+.dyk-link {
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--pink);
+  text-decoration: none;
+  text-shadow: var(--glow-p);
+  align-self: flex-start;
+}
+.dyk-link:hover { color: var(--cyan); }
+.dyk-link.hidden { display: none; }
+
 /* ── Landmark card overlay (fixed, spans full viewport) ── */
 .landmark-card {
   position: fixed;

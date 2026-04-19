@@ -59,7 +59,8 @@ async function fetchOverpassLandmarks(r) {
     const { point, dist } = nearestRoutePoint(el.lat, el.lon, r);
     if (dist <= 50) {
       seen.add(name);
-      results.push({ t: point.t, name, lat: el.lat, lon: el.lon, source: "osm" });
+      const osmType = el.tags?.amenity || el.tags?.tourism || el.tags?.historic || el.tags?.leisure || "place";
+      results.push({ t: point.t, name, lat: el.lat, lon: el.lon, source: "osm", osmType });
     }
   }
   return results;
@@ -93,6 +94,7 @@ async function fetchWikipediaLandmarks(r) {
         lat: item.lat,
         lon: item.lon,
         source: "wikipedia",
+        pageid: item.pageid,
         url: `https://en.wikipedia.org/?curid=${item.pageid}`,
       });
     }
@@ -241,6 +243,7 @@ function buildLegend(lms) {
         ytPlayer.seekTo(lm.t, true);
         shownLandmarks.clear();
       }
+      showDidYouKnow(lm);
     });
 
     list.appendChild(li);
@@ -252,6 +255,72 @@ function buildLegend(lms) {
   if (toggle && legend) {
     toggle.addEventListener("click", () => legend.classList.toggle("collapsed"));
   }
+}
+
+// ── Did You Know ───────────────────────────────────────────────────────────
+const dykCache = new Map();
+
+async function fetchLandmarkInfo(lm) {
+  if (dykCache.has(lm.name)) return dykCache.get(lm.name);
+
+  if (lm.source === "wikipedia" && lm.pageid) {
+    const url = `https://en.wikipedia.org/w/api.php?` + new URLSearchParams({
+      action: "query", prop: "extracts",
+      exintro: true, exchars: 600, pageids: lm.pageid,
+      format: "json", origin: "*",
+    });
+    try {
+      const resp = await fetch(url);
+      const data = await resp.json();
+      const page = Object.values(data.query.pages)[0];
+      // Strip HTML tags from extract
+      const text = (page.extract || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+      const result = { text: text || "No description available.", link: lm.url };
+      dykCache.set(lm.name, result);
+      return result;
+    } catch {
+      const result = { text: "Could not load description.", link: lm.url };
+      dykCache.set(lm.name, result);
+      return result;
+    }
+  }
+
+  // OSM fallback
+  const type = (lm.osmType || "place").replace(/_/g, " ");
+  const result = { text: `A ${type} along the route.`, link: null };
+  dykCache.set(lm.name, result);
+  return result;
+}
+
+function showDidYouKnow(lm) {
+  const panel  = document.getElementById("did-you-know");
+  const title  = document.getElementById("dyk-title");
+  const body   = document.getElementById("dyk-body");
+  const source = document.getElementById("dyk-source");
+  const link   = document.getElementById("dyk-link");
+
+  title.textContent  = lm.name;
+  source.textContent = lm.source === "wikipedia" ? "// Wikipedia" : `// OpenStreetMap · ${(lm.osmType || "place").replace(/_/g, " ")}`;
+  body.textContent   = "Loading…";
+  body.classList.add("loading");
+  link.classList.add("hidden");
+  panel.classList.remove("hidden");
+
+  fetchLandmarkInfo(lm).then(info => {
+    body.textContent = info.text;
+    body.classList.remove("loading");
+    if (info.link) {
+      link.href = info.link;
+      link.classList.remove("hidden");
+    }
+  });
+}
+
+function initDidYouKnow() {
+  const panel = document.getElementById("did-you-know");
+  document.getElementById("dyk-close").addEventListener("click", () => panel.classList.add("hidden"));
+  panel.addEventListener("click", e => { if (e.target === panel) panel.classList.add("hidden"); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") panel.classList.add("hidden"); });
 }
 
 let activeLegendT = null;
@@ -378,4 +447,5 @@ setInterval(() => {
 }, 500);
 
 // ── Boot ───────────────────────────────────────────────────────────────────
+initDidYouKnow();
 loadData();
