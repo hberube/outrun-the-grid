@@ -1,3 +1,6 @@
-data/
+# Raw GPX files may contain personal location data — keep off repo
+data/gpx/
+*.gpx
+# Python cache
 __pycache__/
 *.pyc

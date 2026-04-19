@@ -281,11 +281,21 @@ async function selectRun(run) {
     c.classList.toggle("active", c.dataset.id === run.id);
   });
 
-  // Fetch landmarks for this run
+  // Load landmarks — prefer pre-built static file, fall back to dynamic fetch
   landmarks = [];
   buildLegend([]);
   if (route.length) {
-    landmarks = await loadLandmarks(route, LANDMARK_SOURCES);
+    try {
+      const lmResp = await fetch(`data/runs/${run.id}/landmarks.json`);
+      if (lmResp.ok) {
+        landmarks = await lmResp.json();
+      }
+    } catch (_) {}
+
+    if (!landmarks.length) {
+      landmarks = await loadLandmarks(route, LANDMARK_SOURCES);
+    }
+
     addLandmarkPins();
     buildLegend(landmarks);
   }
@@ -420,14 +430,17 @@ async function searchWikipedia(query) {
 async function fetchLandmarkInfo(lm) {
   if (dykCache.has(lm.name)) return dykCache.get(lm.name);
 
+  // Pre-built summary from build.py (preferred — already Claude-summarized)
+  if (lm.summary) {
+    const result = { text: lm.summary, link: lm.link || null };
+    dykCache.set(lm.name, result);
+    return result;
+  }
+
+  // Fallback: fetch Wikipedia live (for dynamically-loaded landmarks)
   let result = null;
-
   try {
-    // Try the landmark name directly first (works for Wikipedia-sourced and
-    // many OSM landmarks whose names match a Wikipedia article exactly)
     result = await fetchWikipediaExtract(lm.name);
-
-    // If no direct hit, search Wikipedia for the name
     if (!result) {
       const found = await searchWikipedia(lm.name);
       if (found) result = await fetchWikipediaExtract(found);
