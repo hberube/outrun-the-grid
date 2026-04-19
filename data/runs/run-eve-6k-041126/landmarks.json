@@ -1,0 +1,72 @@
+[
+  {
+    "t": 57.0,
+    "name": "Revival Cafe + Kitchen",
+    "lat": 42.3934579,
+    "lon": -71.1205137,
+    "source": "osm"
+  },
+  {
+    "t": 59.0,
+    "name": "Dakzen",
+    "lat": 42.3933462,
+    "lon": -71.1204542,
+    "source": "osm"
+  },
+  {
+    "t": 488.0,
+    "name": "Community Path at Cedar Street",
+    "lat": 42.394133,
+    "lon": -71.1115192,
+    "source": "osm"
+  },
+  {
+    "t": 893.0,
+    "name": "Willoughby Little Free Library",
+    "lat": 42.3895577,
+    "lon": -71.1013895,
+    "source": "osm"
+  },
+  {
+    "t": 1147.0,
+    "name": "Blue Bikes - Gilman Square T at Medford St",
+    "lat": 42.3867816,
+    "lon": -71.0947024,
+    "source": "osm"
+  },
+  {
+    "t": 1835.0,
+    "name": "Community Path at Lowell Street",
+    "lat": 42.3925926,
+    "lon": -71.1056975,
+    "source": "osm"
+  },
+  {
+    "t": 1869.0,
+    "name": "Pedal & Park",
+    "lat": 42.3932458,
+    "lon": -71.1061419,
+    "source": "osm"
+  },
+  {
+    "t": 2056.0,
+    "name": "Elly the Elephant",
+    "lat": 42.394005,
+    "lon": -71.1106255,
+    "source": "osm"
+  },
+  {
+    "t": 2259.0,
+    "name": "Elfland",
+    "lat": 42.3952797,
+    "lon": -71.1164825,
+    "source": "osm"
+  },
+  {
+    "t": 2319.0,
+    "name": "Davis Square Pizza",
+    "lat": 42.3943225,
+    "lon": -71.1170146,
+    "source": "osm"
+  }
+]

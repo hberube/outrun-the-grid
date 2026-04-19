@@ -196,21 +196,20 @@ html, body {
 /* ── Video wrapper ── */
 #player-wrapper {
   position: relative;
-  flex: 1;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   background: #000;
   border-radius: 4px;
   overflow: hidden;
 }
 
 #player {
-  width: 100%;
-  height: 100%;
-}
-
-/* Leaflet resets the iframe's position so we target the inner iframe */
-#player iframe {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
   width: 100% !important;
   height: 100% !important;
+  border: none;
 }
 
 /* ── Did You Know panel ── */
@@ -392,6 +391,32 @@ html, body {
   border-color: rgba(102, 252, 241, 0.45);
 }
 .voice-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+.lang-toggle {
+  pointer-events: auto;
+  display: flex;
+  gap: 2px;
+  margin-left: 0.25rem;
+}
+.lang-btn {
+  background: none;
+  border: 1px solid rgba(160, 160, 160, 0.25);
+  color: var(--dim);
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 0.18rem 0.35rem;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.lang-btn.active {
+  color: var(--cyan);
+  border-color: rgba(102, 252, 241, 0.45);
+  background: rgba(102, 252, 241, 0.08);
+}
+.lang-btn:hover:not(.active) { color: var(--text); border-color: rgba(160,160,160,0.5); }
 
 .hud-item { display: flex; gap: 0.4rem; align-items: baseline; }
 

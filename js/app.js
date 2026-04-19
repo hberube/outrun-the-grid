@@ -16,28 +16,29 @@ let zoomResetTimer = null;
 
 // ── Voice narration ────────────────────────────────────────────────────────
 let voiceEnabled = localStorage.getItem("otg_voice") === "true";
+let voiceLang    = localStorage.getItem("otg_voice_lang") || "en";
 let preferredVoice = null;
 
 function pickVoice() {
   const voices = speechSynthesis.getVoices();
   if (!voices.length) return;
-  // Prefer neural/natural voices: Google > Microsoft, English first
+  const prefix = voiceLang === "fr" ? "fr" : "en";
   const score = v => {
-    if (!v.lang.startsWith("en")) return 0;
+    if (!v.lang.startsWith(prefix)) return 0;
     const n = v.name;
     if (/Google/.test(n) && !/eSpeak/.test(n)) return 4;
     if (/Microsoft.*Natural/.test(n))           return 3;
     if (/Microsoft/.test(n))                    return 2;
     if (!v.localService)                        return 1;
-    return 0;
+    return 1;
   };
   const ranked = [...voices].sort((a, b) => score(b) - score(a));
-  preferredVoice = ranked[0] ?? null;
+  preferredVoice = ranked[0]?.lang.startsWith(prefix) ? ranked[0] : null;
 }
 
 function applyVoice(utt) {
   if (preferredVoice) utt.voice = preferredVoice;
-  utt.lang  = "en-US";
+  utt.lang  = voiceLang === "fr" ? "fr-FR" : "en-US";
   utt.rate  = 0.92;
   utt.pitch = 1.05;
 }
@@ -52,9 +53,23 @@ function initVoiceBtn() {
     btn.classList.toggle("active", voiceEnabled);
     if (!voiceEnabled) cancelSpeech();
   });
-  // Voices may load asynchronously (Chrome)
   pickVoice();
   speechSynthesis.onvoiceschanged = pickVoice;
+}
+
+function initLangToggle() {
+  document.querySelectorAll(".lang-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.lang === voiceLang);
+    btn.addEventListener("click", () => {
+      voiceLang = btn.dataset.lang;
+      localStorage.setItem("otg_voice_lang", voiceLang);
+      document.querySelectorAll(".lang-btn").forEach(b =>
+        b.classList.toggle("active", b.dataset.lang === voiceLang)
+      );
+      cancelSpeech();
+      pickVoice();
+    });
+  });
 }
 
 let speakQueue = Promise.resolve();
@@ -74,13 +89,39 @@ function cancelSpeech() {
   speakQueue = Promise.resolve();
 }
 
+async function fetchLandmarkInfoFr(lm) {
+  const cacheKey = `otg_summary_fr_${lm.name}`;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) return JSON.parse(cached);
+  try {
+    const params = new URLSearchParams({
+      action: "query", prop: "extracts", exintro: true,
+      exchars: 500, titles: lm.name, format: "json", origin: "*",
+    });
+    const resp = await fetch(`https://fr.wikipedia.org/w/api.php?${params}`);
+    const data = await resp.json();
+    const page = Object.values(data.query.pages)[0];
+    if (!page.missing) {
+      const text = page.extract?.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+      if (text && text.length > 20) {
+        const result = { text: text.slice(0, 500) };
+        localStorage.setItem(cacheKey, JSON.stringify(result));
+        return result;
+      }
+    }
+  } catch (_) {}
+  return fetchLandmarkInfo(lm);
+}
+
 function speakLandmark(lm) {
   if (!voiceEnabled || !window.speechSynthesis) return;
   speakQueue = speakQueue.then(async () => {
     if (!voiceEnabled) return;
     await speakUtterance(lm.name);
     if (!voiceEnabled) return;
-    const info = await fetchLandmarkInfo(lm);
+    const info = voiceLang === "fr"
+      ? await fetchLandmarkInfoFr(lm)
+      : await fetchLandmarkInfo(lm);
     if (!voiceEnabled || !info?.text) return;
     const clean = info.text.replace(/\(.*?\)/g, "").replace(/\s+/g, " ").trim();
     const excerpt = clean.length > 400 ? clean.slice(0, 400) + "…" : clean;
@@ -90,7 +131,7 @@ function speakLandmark(lm) {
 
 // ── Cache key ──────────────────────────────────────────────────────────────
 // Bump this when the landmark schema changes to auto-bust stale caches.
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 
 function routeCacheKey(r) {
   const a = r[0], b = r[Math.floor(r.length / 2)], c = r[r.length - 1];
@@ -277,18 +318,10 @@ async function selectRun(run) {
   if (ytPlayer) {
     clearInterval(syncInterval);
     syncInterval = null;
-    // Destroy and recreate — more reliable than loadVideoById across browsers
-    ytPlayer.destroy();
-    ytPlayer = null;
-    playerReady = false;
-    // YouTube destroy() removes the iframe; put the target div back
-    const wrapper = document.getElementById("player-wrapper");
-    if (wrapper) {
-      const div = document.createElement("div");
-      div.id = "player";
-      wrapper.appendChild(div);
+    if (playerReady) {
+      ytPlayer.cueVideoById(VIDEO_ID);
     }
-    setTimeout(tryInitPlayer, 50);
+    // if not yet ready, VIDEO_ID is already set — onReady will pick it up
   } else {
     tryInitPlayer();
   }
@@ -631,7 +664,6 @@ function showLandmarkCard(lm) {
 let ytApiReady = false;
 let configReady = false;
 let playerReady = false;
-let pendingVideoId = null;
 
 function tryInitPlayer() {
   if (!ytApiReady || !configReady || !VIDEO_ID || ytPlayer) return;
@@ -640,13 +672,7 @@ function tryInitPlayer() {
     videoId: VIDEO_ID,
     playerVars: { playsinline: 1, rel: 0, modestbranding: 1 },
     events: {
-      onReady: () => {
-        playerReady = true;
-        if (pendingVideoId) {
-          ytPlayer.loadVideoById(pendingVideoId);
-          pendingVideoId = null;
-        }
-      },
+      onReady: () => { playerReady = true; },
       onStateChange: onPlayerStateChange,
     },
   });
@@ -716,4 +742,5 @@ function initRunsPicker() {
 initDidYouKnow();
 initRunsPicker();
 initVoiceBtn();
+initLangToggle();
 loadData();

@@ -1,0 +1,198 @@
+[
+  {
+    "t": 160.0,
+    "name": "Sydney's Grille",
+    "lat": 42.3621013,
+    "lon": -71.1002506,
+    "source": "osm"
+  },
+  {
+    "t": 182.0,
+    "name": "Blue Bikes - University Park at Sindey Street",
+    "lat": 42.3626749,
+    "lon": -71.1000623,
+    "source": "osm"
+  },
+  {
+    "t": 220.0,
+    "name": "MIT Library Storage Annex",
+    "lat": 42.3627738,
+    "lon": -71.0988449,
+    "source": "osm"
+  },
+  {
+    "t": 228.0,
+    "name": "Pagu",
+    "lat": 42.3623784,
+    "lon": -71.0989865,
+    "source": "osm"
+  },
+  {
+    "t": 234.0,
+    "name": "Middlesex Lounge",
+    "lat": 42.3624977,
+    "lon": -71.0984964,
+    "source": "osm"
+  },
+  {
+    "t": 238.0,
+    "name": "The Journey Within",
+    "lat": 42.362439,
+    "lon": -71.0984067,
+    "source": "osm"
+  },
+  {
+    "t": 247.0,
+    "name": "Naco Taco",
+    "lat": 42.3623342,
+    "lon": -71.0981162,
+    "source": "osm"
+  },
+  {
+    "t": 264.0,
+    "name": "Sunoco",
+    "lat": 42.3617862,
+    "lon": -71.0979542,
+    "source": "osm"
+  },
+  {
+    "t": 272.0,
+    "name": "Tech Model Railroad Club",
+    "lat": 42.3620171,
+    "lon": -71.0973259,
+    "source": "osm"
+  },
+  {
+    "t": 285.0,
+    "name": "Beantown Taqueria",
+    "lat": 42.3617452,
+    "lon": -71.0972055,
+    "source": "osm"
+  },
+  {
+    "t": 289.0,
+    "name": "Cambridge Pizza",
+    "lat": 42.3616789,
+    "lon": -71.0970931,
+    "source": "osm"
+  },
+  {
+    "t": 317.0,
+    "name": "Flour Bakery + Cafe",
+    "lat": 42.361035,
+    "lon": -71.096684,
+    "source": "osm"
+  },
+  {
+    "t": 321.0,
+    "name": "Oath Craft Pizza",
+    "lat": 42.3611761,
+    "lon": -71.0963232,
+    "source": "osm"
+  },
+  {
+    "t": 334.0,
+    "name": "Saloniki",
+    "lat": 42.3609827,
+    "lon": -71.0959949,
+    "source": "osm"
+  },
+  {
+    "t": 433.0,
+    "name": "Alchemist",
+    "lat": 42.3591042,
+    "lon": -71.0940221,
+    "source": "osm"
+  },
+  {
+    "t": 439.0,
+    "name": "Rotch Library",
+    "lat": 42.359247,
+    "lon": -71.0933124,
+    "source": "osm"
+  },
+  {
+    "t": 448.0,
+    "name": "Bosworth's Cafe",
+    "lat": 42.3591037,
+    "lon": -71.0930385,
+    "source": "osm"
+  },
+  {
+    "t": 469.0,
+    "name": "Hart Nautical Gallery",
+    "lat": 42.3586169,
+    "lon": -71.0928821,
+    "source": "osm"
+  },
+  {
+    "t": 476.0,
+    "name": "Blue Bikes - MIT at Mass Ave / Amherst St",
+    "lat": 42.3582694,
+    "lon": -71.0933346,
+    "source": "osm"
+  },
+  {
+    "t": 606.0,
+    "name": "Theta Delta Chi",
+    "lat": 42.3563391,
+    "lon": -71.0964267,
+    "source": "osm"
+  },
+  {
+    "t": 807.0,
+    "name": "For Marjorie",
+    "lat": 42.3547781,
+    "lon": -71.1027059,
+    "source": "osm"
+  },
+  {
+    "t": 1065.0,
+    "name": "Jahunger Taste of Uyghur",
+    "lat": 42.357395,
+    "lon": -71.1077988,
+    "source": "osm"
+  },
+  {
+    "t": 1075.0,
+    "name": "Bluebikes - Old Morse Park at Putnam Ave",
+    "lat": 42.3576885,
+    "lon": -71.1084198,
+    "source": "osm"
+  },
+  {
+    "t": 1082.0,
+    "name": "Cambridge Pizzeria",
+    "lat": 42.3576804,
+    "lon": -71.1078846,
+    "source": "osm"
+  },
+  {
+    "t": 1177.0,
+    "name": "Ensemble Therapeutics",
+    "lat": 42.359065,
+    "lon": -71.1053361,
+    "source": "osm"
+  },
+  {
+    "t": 1648.0,
+    "name": "Bluebikes - MIT Pacific St at Purrington",
+    "lat": 42.3595814,
+    "lon": -71.1013326,
+    "source": "osm"
+  },
+  {
+    "t": 1674.0,
+    "name": "Pacific Street Cafe",
+    "lat": 42.3602168,
+    "lon": -71.102461,
+    "source": "osm"
+  },
+  {
+    "t": 1824.0,
+    "name": "Bright Horizons",
+    "lat": 42.3628087,
+    "lon": -71.1018743,
+    "source": "osm"
+  }
+]
