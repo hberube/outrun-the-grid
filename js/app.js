@@ -213,6 +213,7 @@ async function selectRun(run) {
   resetHUD();
   shownLandmarks.clear();
   activeLegendT = null;
+  dykCache.clear();
 
   // Update picker active state
   document.querySelectorAll(".run-card").forEach(c => {
@@ -566,8 +567,10 @@ function buildRunsPicker() {
       </div>
     `;
     card.addEventListener("click", () => {
-      selectRun(run);
+      document.querySelectorAll(".run-card").forEach(c => c.classList.remove("active"));
+      card.classList.add("active");
       document.getElementById("runs-panel").classList.add("hidden");
+      selectRun(run);
     });
     list.appendChild(card);
   });
