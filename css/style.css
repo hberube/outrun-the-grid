@@ -331,7 +331,7 @@ html, body {
 /* ── Map ── */
 #map {
   flex: none;
-  height: 200px;
+  height: 300px;
   border: 1px solid var(--pink);
   box-shadow: var(--glow-p);
   /* Retro grid overlay */

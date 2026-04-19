@@ -16,6 +16,31 @@ let zoomResetTimer = null;
 
 // ── Voice narration ────────────────────────────────────────────────────────
 let voiceEnabled = localStorage.getItem("otg_voice") === "true";
+let preferredVoice = null;
+
+function pickVoice() {
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) return;
+  // Prefer neural/natural voices: Google > Microsoft, English first
+  const score = v => {
+    if (!v.lang.startsWith("en")) return 0;
+    const n = v.name;
+    if (/Google/.test(n) && !/eSpeak/.test(n)) return 4;
+    if (/Microsoft.*Natural/.test(n))           return 3;
+    if (/Microsoft/.test(n))                    return 2;
+    if (!v.localService)                        return 1;
+    return 0;
+  };
+  const ranked = [...voices].sort((a, b) => score(b) - score(a));
+  preferredVoice = ranked[0] ?? null;
+}
+
+function applyVoice(utt) {
+  if (preferredVoice) utt.voice = preferredVoice;
+  utt.lang  = "en-US";
+  utt.rate  = 0.92;
+  utt.pitch = 1.05;
+}
 
 function initVoiceBtn() {
   const btn = document.getElementById("voice-btn");
@@ -27,21 +52,23 @@ function initVoiceBtn() {
     btn.classList.toggle("active", voiceEnabled);
     if (!voiceEnabled) speechSynthesis.cancel();
   });
+  // Voices may load asynchronously (Chrome)
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
 }
 
 function speakLandmark(lm) {
   if (!voiceEnabled || !window.speechSynthesis) return;
   speechSynthesis.cancel();
   const intro = new SpeechSynthesisUtterance(lm.name);
-  intro.rate = 0.95;
+  applyVoice(intro);
   speechSynthesis.speak(intro);
-  // Fetch and speak the DYK extract after the name
   fetchLandmarkInfo(lm).then(info => {
     if (!voiceEnabled || !info?.text) return;
     const clean = info.text.replace(/\(.*?\)/g, "").replace(/\s+/g, " ").trim();
     const excerpt = clean.length > 400 ? clean.slice(0, 400) + "…" : clean;
     const body = new SpeechSynthesisUtterance(excerpt);
-    body.rate = 0.95;
+    applyVoice(body);
     speechSynthesis.speak(body);
   });
 }
