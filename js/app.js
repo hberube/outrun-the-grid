@@ -292,7 +292,7 @@ async function selectRun(run) {
 
   resetHUD();
   shownLandmarks.clear();
-  activeLegendT = null;
+  activeTimelineT = null;
   dykCache.clear();
   if (zoomResetTimer) { clearTimeout(zoomResetTimer); zoomResetTimer = null; }
   cancelSpeech();
@@ -304,8 +304,7 @@ async function selectRun(run) {
 
   // Load landmarks — prefer pre-built static file, fall back to dynamic fetch
   landmarks = [];
-  buildLegend([]);
-  buildTranscript([]);
+  buildTimeline([]);
   if (route.length) {
     try {
       const lmResp = await fetch(`data/runs/${run.id}/landmarks.json`);
@@ -319,8 +318,7 @@ async function selectRun(run) {
     }
 
     addLandmarkPins();
-    buildLegend(landmarks);
-    buildTranscript(landmarks);
+    buildTimeline(landmarks);
   }
 }
 
@@ -330,7 +328,10 @@ let pinsLayer = null;
 
 function initMap() {
   map = L.map("map", { zoomControl: true, attributionControl: false }).setView([0, 0], 2);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
+  }).addTo(map);
 }
 
 function resetMap() {
@@ -376,46 +377,59 @@ function addLandmarkPins() {
   });
 }
 
-// ── Landmarks legend ───────────────────────────────────────────────────────
-function buildLegend(lms) {
-  const list = document.getElementById("legend-list");
+// ── Route Timeline (replaces separate legend + transcript) ─────────────────
+function buildTimeline(lms) {
+  const list = document.getElementById("timeline-list");
   if (!list) return;
   list.innerHTML = "";
 
   lms.forEach(lm => {
-    const li = document.createElement("li");
-    li.className = "legend-item";
-    li.dataset.t = lm.t;
+    const card = document.createElement("div");
+    card.className = "timeline-card";
+    card.dataset.t = lm.t;
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+    card.setAttribute("aria-label", lm.name);
 
     const m = Math.floor(lm.t / 60);
     const s = Math.floor(lm.t % 60).toString().padStart(2, "0");
     const srcClass = lm.source === "wikipedia" ? "wikipedia" : "osm";
     const icon = lm.source === "wikipedia" ? "◉" : "◈";
 
-    li.innerHTML = `
-      <span class="legend-ts">${m}:${s}</span>
-      <span class="legend-icon ${srcClass}">${icon}</span>
-      <span class="legend-name">${lm.name}</span>
+    card.innerHTML = `
+      <div class="timeline-meta">
+        <span class="timeline-ts">${m}:${s}</span>
+        <span class="timeline-icon ${srcClass}">${icon}</span>
+        <span class="timeline-name">${lm.name}</span>
+      </div>
+      <p class="timeline-text">…</p>
     `;
 
-    li.addEventListener("click", () => {
+    const activate = () => {
       if (ytPlayer && typeof ytPlayer.seekTo === "function") {
         ytPlayer.seekTo(lm.t, true);
         shownLandmarks.clear();
       }
       showDidYouKnow(lm);
+    };
+    card.addEventListener("click", activate);
+    card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); } });
+
+    fetchLandmarkInfo(lm).then(info => {
+      const p = card.querySelector(".timeline-text");
+      if (p && info?.text) p.textContent = info.text;
     });
 
-    list.appendChild(li);
+    list.appendChild(card);
   });
 
   // Toggle button
-  const toggle = document.getElementById("legend-toggle");
-  const legend = document.getElementById("legend");
-  if (toggle && legend) {
+  const toggle = document.getElementById("timeline-toggle");
+  const timeline = document.getElementById("route-timeline");
+  if (toggle && timeline) {
     toggle.onclick = null;
-    toggle.addEventListener("click", () => legend.classList.toggle("collapsed"));
-    if (window.innerWidth <= 700) legend.classList.add("collapsed");
+    toggle.addEventListener("click", () => timeline.classList.toggle("collapsed"));
+    if (window.innerWidth <= 700) timeline.classList.add("collapsed");
   }
 }
 
@@ -512,68 +526,25 @@ function initDidYouKnow() {
   document.addEventListener("keydown", e => { if (e.key === "Escape") panel.classList.add("hidden"); });
 }
 
-let activeLegendT = null;
-let activeTranscriptT = null;
+let activeTimelineT = null;
 
-function updateActiveLegendItem(t) {
+function updateActiveTimelineCard(t) {
   let best = null;
   for (const lm of landmarks) {
     if (lm.t <= t) best = lm;
     else break;
   }
   const nextT = best ? best.t : null;
-  if (nextT !== activeLegendT) {
-    activeLegendT = nextT;
-    const list = document.getElementById("legend-list");
-    if (list) {
-      list.querySelectorAll(".legend-item").forEach(li => {
-        const active = Number(li.dataset.t) === nextT;
-        li.classList.toggle("active", active);
-        if (active) li.scrollIntoView({ block: "nearest" });
-      });
-    }
-  }
+  if (nextT === activeTimelineT) return;
+  activeTimelineT = nextT;
 
-  if (nextT !== activeTranscriptT) {
-    activeTranscriptT = nextT;
-    const tlist = document.getElementById("transcript-list");
-    if (tlist) {
-      tlist.querySelectorAll(".transcript-item").forEach(el => {
-        const itemT = Number(el.dataset.t);
-        el.classList.toggle("active", itemT === nextT);
-        el.classList.toggle("passed", itemT < (nextT ?? Infinity) && itemT !== nextT);
-        if (itemT === nextT) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
-      });
-    }
-  }
-}
-
-function buildTranscript(lms) {
-  const list = document.getElementById("transcript-list");
+  const list = document.getElementById("timeline-list");
   if (!list) return;
-  list.innerHTML = "";
-
-  lms.forEach(lm => {
-    const el = document.createElement("div");
-    el.className = "transcript-item";
-    el.dataset.t = lm.t;
-
-    const m = Math.floor(lm.t / 60);
-    const s = Math.floor(lm.t % 60).toString().padStart(2, "0");
-
-    el.innerHTML = `
-      <span class="transcript-ts">${m}:${s}</span>
-      <div class="transcript-name">${lm.name.toUpperCase()}</div>
-      <p class="transcript-text">…</p>
-    `;
-
-    // Fill text asynchronously
-    fetchLandmarkInfo(lm).then(info => {
-      const p = el.querySelector(".transcript-text");
-      if (p && info?.text) p.textContent = info.text;
-    });
-
-    list.appendChild(el);
+  list.querySelectorAll(".timeline-card").forEach(card => {
+    const itemT = Number(card.dataset.t);
+    card.classList.toggle("active", itemT === nextT);
+    card.classList.toggle("passed", itemT < (nextT ?? Infinity) && itemT !== nextT);
+    if (itemT === nextT) card.scrollIntoView({ block: "nearest", behavior: "smooth" });
   });
 }
 
@@ -598,7 +569,7 @@ function onTick() {
   if (marker) marker.setLatLng([pt.lat, pt.lon]);
   updateHUD(pt, t);
   checkLandmarks(t);
-  updateActiveLegendItem(t);
+  updateActiveTimelineCard(t);
 }
 
 // ── HUD ────────────────────────────────────────────────────────────────────
