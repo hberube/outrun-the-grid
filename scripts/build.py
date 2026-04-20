@@ -1,13 +1,15 @@
 """
 build.py — Outrun the Grid data pipeline
-Usage: python scripts/build.py <path/to/run.gpx> --id <run-id>
+Usage: python scripts/build.py <path/to/run.gpx> --id <run-id> [--strava-activity-id <id>]
 
 Outputs:
   data/runs/<id>/route_data.json  — GPS track points with pace/elevation
   data/runs/<id>/landmarks.json   — nearby POIs with 2-sentence Claude summaries
+  data/runs/<id>/segments.json    — Strava segment efforts with KOM comparison (optional)
 
 Set ANTHROPIC_API_KEY env var to enable Claude summarization.
-Without it, landmarks are written with the raw Wikipedia extract.
+Set STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, STRAVA_REFRESH_TOKEN to enable Strava segments.
+Without the API key, landmarks are written with the raw Wikipedia extract.
 """
 
 import argparse
@@ -16,6 +18,7 @@ import math
 import os
 import sys
 import time
+from datetime import timezone
 
 import gpxpy
 import requests
@@ -245,6 +248,118 @@ def dedup_landmarks(landmarks):
     return deduped
 
 
+# ── Strava ────────────────────────────────────────────────────────────────────
+
+def strava_get_token(client_id, client_secret, refresh_token):
+    resp = requests.post(
+        "https://www.strava.com/oauth/token",
+        data={
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "refresh_token": refresh_token,
+            "grant_type": "refresh_token",
+        },
+        timeout=15,
+    )
+    resp.raise_for_status()
+    return resp.json()["access_token"]
+
+
+def strava_get_activity(activity_id, access_token):
+    resp = requests.get(
+        f"https://www.strava.com/api/v3/activities/{activity_id}",
+        params={"include_all_efforts": "true"},
+        headers={"Authorization": f"Bearer {access_token}"},
+        timeout=15,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def strava_get_leaderboard(segment_id, access_token):
+    try:
+        resp = requests.get(
+            f"https://www.strava.com/api/v3/segments/{segment_id}/leaderboard",
+            params={"per_page": 1},
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        entries = resp.json().get("entries", [])
+        if entries:
+            return {
+                "elapsed_time": entries[0]["elapsed_time"],
+                "athlete_name": entries[0].get("athlete_name", ""),
+            }
+    except Exception as e:
+        print(f"    Warning: leaderboard fetch failed: {e}")
+    return None
+
+
+def fmt_time(seconds):
+    m, s = divmod(int(seconds), 60)
+    return f"{m}:{s:02d}"
+
+
+def build_segments(activity, access_token):
+    from datetime import datetime
+
+    efforts = activity.get("segment_efforts", [])
+    if not efforts:
+        print("  No segment efforts found in this activity.")
+        return []
+
+    # Activity start time (UTC)
+    act_start_str = activity["start_date"]  # e.g. "2026-04-11T10:23:45Z"
+    act_start = datetime.fromisoformat(act_start_str.replace("Z", "+00:00"))
+
+    segments = []
+    for i, effort in enumerate(efforts, 1):
+        name = effort["name"]
+        elapsed = effort["elapsed_time"]
+        print(f"  [{i}/{len(efforts)}] {name} — {fmt_time(elapsed)}")
+
+        # Video-relative timestamps
+        effort_start_str = effort["start_date"]
+        effort_start = datetime.fromisoformat(effort_start_str.replace("Z", "+00:00"))
+        t_start = round((effort_start - act_start).total_seconds(), 1)
+        t_end = round(t_start + elapsed, 1)
+
+        # PR detection
+        is_pr = effort.get("pr_rank") == 1
+        prev_pr = None
+        stats = effort.get("segment", {}).get("athlete_segment_stats", {})
+        if stats.get("pr_elapsed_time") and not is_pr:
+            prev_pr = stats["pr_elapsed_time"]
+
+        # KOM comparison
+        segment_id = effort["segment"]["id"]
+        kom = strava_get_leaderboard(segment_id, access_token)
+        time.sleep(0.3)  # rate limiting
+
+        seg = {
+            "t_start": t_start,
+            "t_end": t_end,
+            "name": name,
+            "elapsed_time": elapsed,
+            "is_pr": is_pr,
+        }
+        if prev_pr:
+            seg["previous_pr"] = prev_pr
+        if kom:
+            seg["kom_elapsed_time"] = kom["elapsed_time"]
+            seg["kom_athlete"] = kom["athlete_name"]
+
+        # Rank from activity effort
+        rank = effort.get("rank")
+        if rank:
+            seg["athlete_rank"] = rank
+
+        segments.append(seg)
+
+    return segments
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -252,6 +367,8 @@ def main():
     parser.add_argument("gpx_file", help="Path to Garmin .gpx export")
     parser.add_argument("--id", dest="run_id", required=True,
                         help="Run ID matching runs.json (e.g. run-eve-6k)")
+    parser.add_argument("--strava-activity-id", dest="strava_activity_id", default=None,
+                        help="Strava activity ID to fetch segment data")
     args = parser.parse_args()
 
     if not os.path.isfile(args.gpx_file):
@@ -307,6 +424,32 @@ def main():
     with open(landmarks_path, "w", encoding="utf-8") as f:
         json.dump(landmarks, f, ensure_ascii=False, indent=2)
     print(f"Wrote {landmarks_path}")
+
+    # ── Strava segments (optional) ─────────────────────────────────────────────
+    strava_id = args.strava_activity_id or os.environ.get("STRAVA_ACTIVITY_ID", "")
+    client_id = os.environ.get("STRAVA_CLIENT_ID", "")
+    client_secret = os.environ.get("STRAVA_CLIENT_SECRET", "")
+    refresh_token = os.environ.get("STRAVA_REFRESH_TOKEN", "")
+
+    if strava_id and client_id and client_secret and refresh_token:
+        print(f"\nFetching Strava segments for activity {strava_id}...")
+        try:
+            access_token = strava_get_token(client_id, client_secret, refresh_token)
+            activity = strava_get_activity(strava_id, access_token)
+            segments = build_segments(activity, access_token)
+            segments_path = os.path.join(out_dir, "segments.json")
+            with open(segments_path, "w", encoding="utf-8") as f:
+                json.dump(segments, f, ensure_ascii=False, indent=2)
+            print(f"Wrote {segments_path} ({len(segments)} segments)")
+        except Exception as e:
+            print(f"Warning: Strava fetch failed — {e}")
+    else:
+        missing = []
+        if not strava_id:      missing.append("--strava-activity-id or STRAVA_ACTIVITY_ID")
+        if not client_id:      missing.append("STRAVA_CLIENT_ID")
+        if not client_secret:  missing.append("STRAVA_CLIENT_SECRET")
+        if not refresh_token:  missing.append("STRAVA_REFRESH_TOKEN")
+        print(f"\nNote: Skipping Strava segments. Set {', '.join(missing)} to enable.")
 
 
 if __name__ == "__main__":

@@ -584,6 +584,79 @@ html, body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
+/* ── Segment racing card ── */
+.segment-card {
+  position: fixed;
+  top: calc(44px + 0.75rem);
+  left: 1rem;
+  background: rgba(10, 10, 10, 0.94);
+  border: 1px solid rgba(102, 252, 241, 0.35);
+  border-radius: 6px;
+  padding: 0.7rem 1rem 0.8rem;
+  z-index: 1500;
+  min-width: 190px;
+  font-family: var(--font-mono);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(102,252,241,0.08);
+  animation: seg-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.segment-card.hidden { display: none; }
+.segment-card.finalized { border-color: rgba(160, 160, 160, 0.25); }
+
+@keyframes seg-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.seg-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  color: var(--cyan);
+  font-weight: 600;
+}
+.seg-name {
+  font-size: 0.72rem;
+  color: var(--text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+.seg-timer {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--cyan);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.seg-kom {
+  font-size: 0.6rem;
+  color: var(--dim);
+  letter-spacing: 0.05em;
+}
+.seg-delta {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.seg-delta.ahead { color: #4ade80; }
+.seg-delta.behind { color: #f87171; }
+.seg-rank {
+  font-size: 0.6rem;
+  color: var(--dim);
+  margin-top: 0.1rem;
+}
+.seg-pr-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fbbf24;
+  letter-spacing: 0.12em;
+  margin-top: 0.15rem;
+}
+.seg-pr-badge.hidden { display: none; }
+
 /* ── Mobile bottom-sheet animation ── */
 @keyframes dyk-mobile-in {
   from { opacity: 0; transform: translateY(24px); }

@@ -59,6 +59,7 @@
           <button class="filter-btn active" data-filter="places">PLACES</button>
           <button class="filter-btn"        data-filter="stores">STORES</button>
           <button class="filter-btn active" data-filter="wiki">WIKI</button>
+          <button class="filter-btn active" data-filter="strava">STRAVA</button>
         </div>
         <div id="timeline-list"></div>
       </div>
@@ -71,6 +72,15 @@
     <h2 class="dyk-title" id="dyk-title"></h2>
     <p class="dyk-body" id="dyk-body"></p>
     <a class="dyk-link" id="dyk-link" target="_blank" rel="noopener">Read more &#8594;</a>
+  </div>
+
+  <div id="segment-card" class="segment-card hidden" role="status" aria-live="polite">
+    <div class="seg-label">⚡ SEGMENT</div>
+    <div class="seg-name" id="seg-name"></div>
+    <div class="seg-timer" id="seg-timer">0:00</div>
+    <div class="seg-kom" id="seg-kom"></div>
+    <div class="seg-delta" id="seg-delta"></div>
+    <div class="seg-pr-badge hidden" id="seg-pr-badge">★ NEW PR</div>
   </div>
 
   <div id="landmark-card" class="landmark-card hidden" role="status" aria-live="polite">

@@ -6,7 +6,8 @@
     "distance": "5K",
     "videoId": "ugu-SX3AlZ4",
     "gpx": "Cambridge-Classic-5K-Spring-withEve-withGarminStats.gpx",
-    "order": 2
+    "stravaActivityId": "17902606035",
+    "order": 1
   },
   {
     "id": "run-eve-6k-041126",
@@ -15,6 +16,7 @@
     "distance": "6K",
     "videoId": "jqJGIaxlbpI",
     "gpx": "Run-with-Eve-6K-041126.gpx",
-    "order": 1
+    "stravaActivityId": "",
+    "order": 2
   }
 ]
