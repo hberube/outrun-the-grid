@@ -464,6 +464,14 @@ function initFilters() {
   });
 }
 
+function seekToLandmark(lm) {
+  if (ytPlayer && typeof ytPlayer.seekTo === "function") {
+    ytPlayer.seekTo(lm.t, true);
+    ytPlayer.playVideo();
+    shownLandmarks.clear();
+  }
+}
+
 function addLandmarkPins() {
   if (!map) return;
   if (pinsLayer) { map.removeLayer(pinsLayer); pinsLayer = null; }
@@ -471,9 +479,11 @@ function addLandmarkPins() {
   filterLandmarks(landmarks).forEach(lm => {
     const color = lm.source === "wikipedia" ? "#c084fc" : "#ff2d78";
     L.circleMarker([lm.lat, lm.lon], {
-      radius: 4, color, fillColor: color, fillOpacity: 0.85, weight: 1,
+      radius: 6, color, fillColor: color, fillOpacity: 0.85, weight: 1,
+      interactive: true,
     })
       .bindTooltip(lm.name, { permanent: false, className: "lm-tip" })
+      .on("click", () => { seekToLandmark(lm); showDidYouKnow(lm); })
       .addTo(pinsLayer);
   });
 }
@@ -507,10 +517,7 @@ function buildTimeline(lms) {
     `;
 
     const activate = () => {
-      if (ytPlayer && typeof ytPlayer.seekTo === "function") {
-        ytPlayer.seekTo(lm.t, true);
-        shownLandmarks.clear();
-      }
+      seekToLandmark(lm);
       showDidYouKnow(lm);
     };
     card.addEventListener("click", activate);
