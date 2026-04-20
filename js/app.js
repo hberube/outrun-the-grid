@@ -1214,4 +1214,5 @@ initFilters();
 initProgressBar();
 initElevationProfile();
 document.getElementById("stats-card")?.addEventListener("click", hideStatsCard);
+document.getElementById("stats-close")?.addEventListener("click", hideStatsCard);
 loadData();

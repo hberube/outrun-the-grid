@@ -585,6 +585,22 @@ html, body {
   min-width: 220px;
 }
 
+.stats-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.stats-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
 .stats-title {
   font-size: 0.6rem;
   letter-spacing: 0.25em;
