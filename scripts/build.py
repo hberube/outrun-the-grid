@@ -136,7 +136,9 @@ out body;
                 best_dist = d
                 best_t = pt["t"]
         if best_dist <= 50:
-            landmarks.append({"t": best_t, "name": name, "lat": el_lat, "lon": el_lon, "source": "osm"})
+            tags = el.get("tags", {})
+            osm_tag = next((k for k in ["historic", "tourism", "leisure", "amenity"] if k in tags), "amenity")
+            landmarks.append({"t": best_t, "name": name, "lat": el_lat, "lon": el_lon, "source": "osm", "osmTag": osm_tag})
 
     return landmarks
 
@@ -210,6 +212,26 @@ def summarize_with_claude(client, text, name):
         return None
 
 
+def summarize_with_claude_fr(client, text, name):
+    try:
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=120,
+            messages=[{
+                "role": "user",
+                "content": (
+                    f"Résume le texte suivant en exactement 2 courtes phrases engageantes "
+                    f"en français canadien pour un coureur qui vient de passer ce point d'intérêt. "
+                    f"Sois conversationnel, pas encyclopédique. Ne commence pas par le nom du lieu.\n\n{text}"
+                ),
+            }],
+        )
+        return msg.content[0].text.strip()
+    except Exception as e:
+        print(f"  Warning: Claude FR failed for '{name}': {e}")
+        return None
+
+
 # ── Dedup ─────────────────────────────────────────────────────────────────────
 
 def dedup_landmarks(landmarks):
@@ -265,15 +287,18 @@ def main():
     else:
         print("Note: Set ANTHROPIC_API_KEY to enable 2-sentence summaries.")
 
-    # Enrich each landmark with Wikipedia + Claude summary
+    # Enrich each landmark with Wikipedia + Claude summary (EN + FR)
     for i, lm in enumerate(landmarks, 1):
         print(f"  [{i}/{len(landmarks)}] {lm['name']}")
         info = fetch_wikipedia_info(lm["name"])
         if info:
             lm["link"] = info["link"]
             if claude:
-                summary = summarize_with_claude(claude, info["text"], lm["name"])
-                lm["summary"] = summary or info["text"][:400]
+                summary_en = summarize_with_claude(claude, info["text"], lm["name"])
+                lm["summary"] = summary_en or info["text"][:400]
+                summary_fr = summarize_with_claude_fr(claude, info["text"], lm["name"])
+                if summary_fr:
+                    lm["summary_fr"] = summary_fr
             else:
                 lm["summary"] = info["text"][:400]
         time.sleep(0.2)  # be polite to Wikipedia

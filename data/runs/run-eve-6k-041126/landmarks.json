@@ -4,69 +4,99 @@
     "name": "Revival Cafe + Kitchen",
     "lat": 42.3934579,
     "lon": -71.1205137,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A beloved Somerville neighborhood spot known for weekend brunch crowds and excellent coffee, this café has anchored the local food scene for years. If you're struggling with the last mile, remember they have those sticky buns waiting inside.",
+    "summary_fr": "Un café de quartier bien-aimé de Somerville, reconnu pour ses déjeuners du week-end et son excellent café. Si tu peines sur le dernier kilomètre, rappelle-toi qu'ils ont des petits pains collants qui t'attendent à l'intérieur."
   },
   {
     "t": 59.0,
     "name": "Dakzen",
     "lat": 42.3933462,
     "lon": -71.1204542,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "One of Somerville's go-to Thai spots, known for bold flavors and a loyal local following. After this run, a bowl of noodles here might be exactly the recovery fuel you need.",
+    "summary_fr": "L'un des meilleurs restos thaïs de Somerville, reconnu pour ses saveurs audacieuses et ses habitués fidèles. Après cette course, un bol de nouilles ici pourrait être exactement le carburant de récupération qu'il te faut."
   },
   {
     "t": 488.0,
     "name": "Community Path at Cedar Street",
     "lat": 42.394133,
     "lon": -71.1115192,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "You're crossing the Somerville Community Path, a 2.6-mile multi-use trail built on a former rail corridor connecting Davis Square to Union Square. Thousands of cyclists and pedestrians use this green corridor every single day.",
+    "summary_fr": "Tu traverses le Community Path de Somerville, une piste multifonctionnelle de 4,2 km construite sur une ancienne voie ferrée reliant Davis Square à Union Square. Des milliers de cyclistes et de piétons empruntent ce couloir vert chaque jour."
   },
   {
     "t": 893.0,
     "name": "Willoughby Little Free Library",
     "lat": 42.3895577,
     "lon": -71.1013895,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A tiny wooden book-lending box mounted on a post — borrow a book, leave a book, no library card needed. The Little Free Library movement has spread to over 150,000 locations worldwide since its founding in 2009.",
+    "summary_fr": "Une petite boîte d'échange de livres montée sur un poteau — emprunte un livre, laisse un livre, pas de carte de bibliothèque requise. Le mouvement Little Free Library s'est répandu dans plus de 150 000 endroits dans le monde depuis sa fondation en 2009."
   },
   {
     "t": 1147.0,
     "name": "Blue Bikes - Gilman Square T at Medford St",
     "lat": 42.3867816,
     "lon": -71.0947024,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A Bluebikes docking station near Gilman Square, part of the Boston area's shared bicycle network with over 400 stations and 4,000 bikes. Next time, maybe bike the route instead of running it — or don't, you're doing great.",
+    "summary_fr": "Une station Bluebikes près de Gilman Square, faisant partie du réseau de vélos en libre-service de la région de Boston avec plus de 400 stations et 4 000 vélos. La prochaine fois, tu pourrais peut-être faire le trajet à vélo — ou pas, tu t'en sors très bien à pied."
   },
   {
     "t": 1835.0,
     "name": "Community Path at Lowell Street",
     "lat": 42.3925926,
     "lon": -71.1056975,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "Another access point to the Somerville Community Path, this stretch winds through the heart of the city's rapidly evolving neighborhoods. The trail was completed in phases over many years of community advocacy.",
+    "summary_fr": "Un autre point d'accès au Community Path de Somerville, ce tronçon serpente à travers les quartiers en pleine transformation de la ville. La piste a été complétée par phases au fil de nombreuses années de mobilisation communautaire."
   },
   {
     "t": 1869.0,
     "name": "Pedal & Park",
     "lat": 42.3932458,
     "lon": -71.1061419,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A bike parking and services facility along the Community Path corridor, designed to make cycling more convenient in Somerville. It's proof that this city takes two-wheel commuting seriously.",
+    "summary_fr": "Un stationnement et service de vélos situé le long du corridor du Community Path, conçu pour faciliter le cyclisme à Somerville. C'est la preuve que cette ville prend sérieusement la mobilité à deux roues."
   },
   {
     "t": 2056.0,
     "name": "Elly the Elephant",
     "lat": 42.394005,
     "lon": -71.1106255,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "tourism",
+    "summary": "This beloved fiberglass elephant sculpture has been a Davis Square landmark since 2004, greeting commuters and passersby with her cheerful presence. She's been adopted by the neighborhood as an unofficial mascot of the square.",
+    "summary_fr": "Cette adorable sculpture en fibre de verre est un repère de Davis Square depuis 2004, accueillant les navetteurs et les passants de sa présence joyeuse. Elle a été adoptée par le quartier comme mascotte officieuse de la place."
   },
   {
     "t": 2259.0,
     "name": "Elfland",
     "lat": 42.3952797,
     "lon": -71.1164825,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "tourism",
+    "summary": "A whimsical community space and art installation that brings a bit of magic to the Davis Square neighborhood. It's the kind of quirky local gem that makes Somerville one of Boston's most creative communities.",
+    "summary_fr": "Un espace communautaire fantaisiste et une installation artistique qui apporte un peu de magie au quartier de Davis Square. C'est le genre de joyau local décalé qui fait de Somerville l'une des communautés les plus créatives de Boston."
   },
   {
     "t": 2319.0,
     "name": "Davis Square Pizza",
     "lat": 42.3943225,
     "lon": -71.1170146,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A neighborhood pizza staple serving up slices to Davis Square regulars, students, and late-night revelers for years. There's something deeply satisfying about running past a pizza place when you're 3 miles in.",
+    "summary_fr": "Une pizzeria incontournable du quartier qui régale les habitués de Davis Square, les étudiants et les noctambules depuis des années. Il y a quelque chose de profondément satisfaisant à passer devant une pizzeria quand on est à 5 km de course."
   }
 ]

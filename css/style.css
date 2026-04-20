@@ -197,6 +197,7 @@ html, body {
 #player-wrapper {
   position: relative;
   width: 100%;
+  flex-shrink: 0;
   aspect-ratio: 16 / 9;
   background: #000;
   border-radius: 4px;
@@ -204,9 +205,7 @@ html, body {
 }
 
 #player {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
+  display: block;
   width: 100% !important;
   height: 100% !important;
   border: none;
@@ -444,6 +443,34 @@ html, body {
   overflow: hidden;
 }
 
+.filter-bar {
+  display: flex;
+  gap: 4px;
+  padding: 0.35rem 0.5rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.filter-btn {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  border: 1px solid rgba(160,160,160,0.25);
+  background: none;
+  color: var(--dim);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.filter-btn.active {
+  color: var(--cyan);
+  border-color: rgba(102,252,241,0.4);
+  background: rgba(102,252,241,0.07);
+}
+.filter-btn:hover:not(.active) { color: var(--text); border-color: rgba(160,160,160,0.45); }
+
 .timeline-header {
   display: flex;
   justify-content: space-between;
@@ -602,18 +629,18 @@ html, body {
 
   #player-wrapper {
     flex: none;
+    flex-shrink: 0;
     width: 100%;
-    height: 0;
-    padding-bottom: 56.25%;
-    position: relative;
+    aspect-ratio: 16 / 9;
+    position: sticky;
+    top: 44px;
+    z-index: 10;
     border-radius: 0;
   }
 
   #player {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
   }
 
   .map-panel { border-top: 1px solid var(--border); }
@@ -643,8 +670,10 @@ html, body {
   .hud-label { font-size: 0.62rem; }
   .hud-value { font-size: 1rem; min-width: 5ch; }
 
-  /* Timeline hidden on mobile */
-  #route-timeline { display: none; }
+  #route-timeline {
+    display: flex;
+    max-height: 50vh;
+  }
 
   /* DYK: bottom sheet */
   .dyk-panel {

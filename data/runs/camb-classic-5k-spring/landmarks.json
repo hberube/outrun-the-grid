@@ -4,195 +4,283 @@
     "name": "Sydney's Grille",
     "lat": 42.3621013,
     "lon": -71.1002506,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A neighborhood grill tucked near MIT's University Park development, popular with locals for a casual bite. It's the kind of spot that gives the Cambridgeport neighborhood the feel of a real community.",
+    "summary_fr": "Un restaurant de quartier niché près du développement University Park du MIT, populaire auprès des locaux en quête d'un repas décontracté. C'est le genre d'endroit qui donne au quartier Cambridgeport l'âme d'une vraie communauté."
   },
   {
     "t": 182.0,
     "name": "Blue Bikes - University Park at Sindey Street",
     "lat": 42.3626749,
     "lon": -71.1000623,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A Bluebikes station serving the MIT University Park neighborhood, connecting residents and researchers to Boston's broader cycling network. The Boston area's bike share system has over 400 stations and 4,000 bikes.",
+    "summary_fr": "Une station Bluebikes desservant le quartier University Park du MIT, reliant les résidents et chercheurs au vaste réseau cyclable de Boston. Le système de vélos en libre-service de la région compte plus de 400 stations et 4 000 vélos."
   },
   {
     "t": 220.0,
     "name": "MIT Library Storage Annex",
     "lat": 42.3627738,
     "lon": -71.0988449,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "Behind these walls lie millions of volumes from MIT's library collections, stored in climate-controlled stacks and retrievable within 24 hours. Less glamorous than the main reading rooms, but just as essential to the research mission.",
+    "summary_fr": "Derrière ces murs se trouvent des millions de volumes des collections de la bibliothèque du MIT, conservés dans des rayonnages climatisés et récupérables en 24 heures. Moins glamour que les grandes salles de lecture, mais tout aussi essentiel à la mission de recherche."
   },
   {
     "t": 228.0,
     "name": "Pagu",
     "lat": 42.3623784,
     "lon": -71.0989865,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "Chef Tracy Chang's acclaimed restaurant blends Spanish tapas with Japanese izakaya culture — think grilled skewers alongside Iberian ham and miso vinaigrettes. It's one of Cambridge's most celebrated dining destinations.",
+    "summary_fr": "Le restaurant acclamé de la cheffe Tracy Chang marie les tapas espagnols à la culture japonaise des izakayas — brochettes grillées, jambon ibérique et vinaigrettes au miso. C'est l'une des destinations gastronomiques les plus reconnues de Cambridge."
   },
   {
     "t": 234.0,
     "name": "Middlesex Lounge",
     "lat": 42.3624977,
     "lon": -71.0984964,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "One of Cambridge's mainstay nightlife venues, Middlesex has hosted DJ nights and live events for years in its industrial-chic space. It's a cultural institution for the area's young professionals and students.",
+    "summary_fr": "L'une des salles incontournables de la vie nocturne de Cambridge, Middlesex accueille depuis des années des soirées DJ et des événements live dans son espace au style industriel chic. C'est une institution culturelle pour les jeunes professionnels et étudiants de la région."
   },
   {
     "t": 238.0,
     "name": "The Journey Within",
     "lat": 42.362439,
     "lon": -71.0984067,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A wellness studio offering bodywork, energy practices, and mindfulness in the heart of Cambridge. A peaceful contrast to the intensity of the MIT campus just steps away.",
+    "summary_fr": "Un studio de bien-être proposant des soins corporels, des pratiques énergétiques et de la pleine conscience au cœur de Cambridge. Un contraste paisible avec l'effervescence du campus du MIT à quelques pas."
   },
   {
     "t": 247.0,
     "name": "Naco Taco",
     "lat": 42.3623342,
     "lon": -71.0981162,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A casual taco spot beloved by MIT students and Cambridge locals for its quick, flavorful Mexican street food. Running past here mid-route is either great motivation or pure torture, depending on how hungry you are.",
+    "summary_fr": "Un spot de tacos décontracté adoré des étudiants du MIT et des habitants de Cambridge pour sa cuisine mexicaine de rue rapide et savoureuse. Passer devant en pleine course est soit une grande motivation, soit une vraie torture, selon ton niveau de faim."
   },
   {
     "t": 264.0,
     "name": "Sunoco",
     "lat": 42.3617862,
     "lon": -71.0979542,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "Just your neighborhood gas station — but hey, you're running past it on two legs, which is arguably more efficient than four wheels right now. Keep going.",
+    "summary_fr": "Juste une station-service de quartier ordinaire — mais hey, tu la dépasses à pied, ce qui est sans doute plus efficace que quatre roues en ce moment. Continue!"
   },
   {
     "t": 272.0,
     "name": "Tech Model Railroad Club",
     "lat": 42.3620171,
     "lon": -71.0973259,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "tourism",
+    "link": "https://en.wikipedia.org/wiki/Tech_Model_Railroad_Club",
+    "summary": "Founded at MIT in 1946, this legendary club is widely credited as the birthplace of hacker culture — the term 'hacker' was first used in its modern sense right here. Generations of MIT engineers cut their teeth tinkering with its elaborate model layouts.",
+    "summary_fr": "Fondé au MIT en 1946, ce club légendaire est largement reconnu comme le berceau de la culture hacker — le terme 'hacker' dans son sens moderne y a été utilisé pour la première fois. Des générations d'ingénieurs du MIT ont fait leurs armes en bricolant ses circuits élaborés."
   },
   {
     "t": 285.0,
     "name": "Beantown Taqueria",
     "lat": 42.3617452,
     "lon": -71.0972055,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A reliable taco spot serving Boston's take on Mexican street food, popular with the MIT crowd and Cambridge regulars. The name perfectly captures the local-meets-global spirit of the Kendall Square area.",
+    "summary_fr": "Un taco stand fiable proposant l'interprétation bostonienne de la cuisine de rue mexicaine, populaire auprès de la communauté du MIT et des habitués de Cambridge. Le nom capture parfaitement l'esprit local-mondial du secteur de Kendall Square."
   },
   {
     "t": 289.0,
     "name": "Cambridge Pizza",
     "lat": 42.3616789,
     "lon": -71.0970931,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A neighborhood pizza joint that's been feeding students, researchers, and locals in this corner of Cambridge for years. Simple, dependable — exactly what you'd want after logging another 5 kilometers.",
+    "summary_fr": "Une pizzeria de quartier qui nourrit étudiants, chercheurs et locaux dans ce coin de Cambridge depuis des années. Simple, fiable — exactement ce dont tu aurais envie après avoir accumulé encore 5 kilomètres."
   },
   {
     "t": 317.0,
     "name": "Flour Bakery + Cafe",
     "lat": 42.361035,
     "lon": -71.096684,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "link": "https://en.wikipedia.org/wiki/Flour_Bakery_%2B_Cafe",
+    "summary": "James Beard Award-winning pastry chef Joanne Chang's beloved bakery is famous for its sticky buns, sandwiches, and made-from-scratch everything. With multiple locations across Boston, it's become one of the city's most recognizable culinary brands.",
+    "summary_fr": "La boulangerie bien-aimée de la cheffe pâtissière primée Joanne Chang est réputée pour ses brioches collantes, ses sandwichs et tout ce qui est fait maison. Avec plusieurs succursales à Boston, c'est l'une des marques culinaires les plus reconnues de la ville."
   },
   {
     "t": 321.0,
     "name": "Oath Craft Pizza",
     "lat": 42.3611761,
     "lon": -71.0963232,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A craft pizza concept focused on quality ingredients and wood-fired technique, bringing artisanal pizza culture to the Cambridge dining scene. The name says it all — they take their pizza seriously.",
+    "summary_fr": "Un concept de pizza artisanale axé sur des ingrédients de qualité et la cuisson au feu de bois, apportant la culture de la pizza artisanale à la scène gastronomique de Cambridge. Le nom dit tout — ils prennent leur pizza au sérieux."
   },
   {
     "t": 334.0,
     "name": "Saloniki",
     "lat": 42.3609827,
     "lon": -71.0959949,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "Restaurateur Jody Adams brought bold Greek street food flavors to Cambridge with this fast-casual concept centered on gyros, bowls, and crispy pita. A local favorite that proves simple Greek food, done well, is hard to beat.",
+    "summary_fr": "La restauratrice Jody Adams a apporté les saveurs audacieuses de la street food grecque à Cambridge avec ce concept de restauration rapide centré sur les gyros, les bols et le pita croustillant. Un favori local qui prouve que la cuisine grecque simple, bien faite, est difficile à surpasser."
   },
   {
     "t": 433.0,
     "name": "Alchemist",
     "lat": 42.3591042,
     "lon": -71.0940221,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "tourism",
+    "summary": "A creative gallery and studio space at MIT where art and science converge in unexpected ways. It's the kind of place that reminds you MIT is more than an engineering school — creativity here takes many forms.",
+    "summary_fr": "Une galerie et un espace créatif au MIT où art et science se rejoignent de manière inattendue. C'est le genre d'endroit qui rappelle que le MIT est bien plus qu'une école d'ingénieurs — la créativité y prend de nombreuses formes."
   },
   {
     "t": 439.0,
     "name": "Rotch Library",
     "lat": 42.359247,
     "lon": -71.0933124,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "link": "https://en.wikipedia.org/wiki/Rotch_Library",
+    "summary": "MIT's library for architecture, art, and planning houses one of the most comprehensive design collections in New England, named after patron Benjamin Smith Rotch. It's a quiet sanctuary of creativity tucked inside one of the world's most intense engineering institutions.",
+    "summary_fr": "La bibliothèque du MIT dédiée à l'architecture, l'art et l'urbanisme abrite l'une des collections de design les plus complètes de la Nouvelle-Angleterre, nommée en l'honneur du mécène Benjamin Smith Rotch. C'est un sanctuaire silencieux de créativité niché au sein de l'une des institutions les plus intenses au monde."
   },
   {
     "t": 448.0,
     "name": "Bosworth's Cafe",
     "lat": 42.3591037,
     "lon": -71.0930385,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A cozy MIT campus café that has fueled countless late-night study sessions and early-morning problem sets. If the walls could talk, they'd probably explain about half the patents ever registered by this university.",
+    "summary_fr": "Un café confortable du campus du MIT qui a alimenté d'innombrables sessions d'études tardives et de devoirs matinaux. Si les murs pouvaient parler, ils expliqueraient probablement la moitié des brevets jamais enregistrés par cette université."
   },
   {
     "t": 469.0,
     "name": "Hart Nautical Gallery",
     "lat": 42.3586169,
     "lon": -71.0928821,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "tourism",
+    "link": "https://en.wikipedia.org/wiki/Hart_Nautical_Gallery",
+    "summary": "This small but remarkable gallery inside MIT's Building 5 has displayed ship models, marine engines, and nautical artifacts since 1922, tracing centuries of maritime innovation. It's a hidden gem that most MIT students walk past without knowing it houses one of the finest collections of historic ship models in America.",
+    "summary_fr": "Cette petite galerie remarquable à l'intérieur du bâtiment 5 du MIT expose des maquettes de navires, des moteurs marins et des artefacts nautiques depuis 1922. C'est un joyau caché que la plupart des étudiants du MIT longent sans savoir qu'il abrite l'une des plus belles collections de maquettes historiques en Amérique."
   },
   {
     "t": 476.0,
     "name": "Blue Bikes - MIT at Mass Ave / Amherst St",
     "lat": 42.3582694,
     "lon": -71.0933346,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "One of the busiest Bluebikes stations in Cambridge, right at the heart of MIT's main drag along Massachusetts Avenue. If you'd rented a bike here instead of running, you'd already be done — but where's the fun in that?",
+    "summary_fr": "L'une des stations Bluebikes les plus fréquentées de Cambridge, au cœur de l'artère principale du MIT le long de Massachusetts Avenue. Si tu avais loué un vélo ici plutôt que de courir, tu aurais déjà terminé — mais où serait le plaisir?"
   },
   {
     "t": 606.0,
     "name": "Theta Delta Chi",
     "lat": 42.3563391,
     "lon": -71.0964267,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "One of MIT's oldest fraternities, Theta Delta Chi has been part of the university community since 1902, housing generations of engineers, scientists, and future founders. Greek life at MIT is as much about study groups and hackathons as it is about social life.",
+    "summary_fr": "L'une des plus anciennes fraternités du MIT, Theta Delta Chi fait partie de la communauté universitaire depuis 1902, accueillant des générations d'ingénieurs, de scientifiques et de futurs entrepreneurs. La vie fraternelle au MIT est autant une question de groupes d'étude et de hackathons que de vie sociale."
   },
   {
     "t": 807.0,
     "name": "For Marjorie",
     "lat": 42.3547781,
     "lon": -71.1027059,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "tourism",
+    "summary": "A public art installation dedicated to Marjorie, this piece adds a moment of quiet reflection and personal memory to the Cambridge streetscape. Public art like this transforms a simple run into a journey through human stories.",
+    "summary_fr": "Une installation artistique publique dédiée à Marjorie, cette œuvre apporte un moment de réflexion tranquille et de mémoire personnelle au paysage urbain de Cambridge. L'art public comme celui-ci transforme une simple course en voyage à travers des histoires humaines."
   },
   {
     "t": 1065.0,
     "name": "Jahunger Taste of Uyghur",
     "lat": 42.357395,
     "lon": -71.1077988,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "One of the very few Uyghur restaurants in the Boston area, serving the rich Central Asian flavors of Xinjiang — hand-pulled noodles, lamb skewers, and baked breads that feel like a passport to another world. The Uyghur people are among the oldest indigenous communities of Central Asia, and this restaurant keeps their culinary traditions alive.",
+    "summary_fr": "L'un des très rares restaurants ouïghours de la région de Boston, servant les riches saveurs d'Asie centrale du Xinjiang — nouilles tirées à la main, brochettes d'agneau et pains cuits qui donnent l'impression de voyager dans un autre monde. Les Ouïghours comptent parmi les plus anciens peuples autochtones d'Asie centrale, et ce restaurant perpétue leurs traditions culinaires."
   },
   {
     "t": 1075.0,
     "name": "Bluebikes - Old Morse Park at Putnam Ave",
     "lat": 42.3576885,
     "lon": -71.1084198,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "Situated near the Morse Park greenway, this Bluebikes station serves the quiet residential streets of Cambridgeport. It's proof that even the sleepiest Cambridge neighborhoods are well-connected.",
+    "summary_fr": "Situé près de l'espace vert Morse Park, cette station Bluebikes dessert les rues résidentielles paisibles de Cambridgeport. C'est la preuve que même les quartiers les plus tranquilles de Cambridge sont bien connectés."
   },
   {
     "t": 1082.0,
     "name": "Cambridge Pizzeria",
     "lat": 42.3576804,
     "lon": -71.1078846,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A neighborhood pizzeria that has been satisfying cravings in the Cambridgeport area for years. Running past a pizzeria in the second half of a 5K is a true test of willpower.",
+    "summary_fr": "Une pizzeria de quartier qui satisfait les envies dans la zone de Cambridgeport depuis des années. Passer devant une pizzeria dans la deuxième moitié d'un 5K est un vrai test de volonté."
   },
   {
     "t": 1177.0,
     "name": "Ensemble Therapeutics",
     "lat": 42.359065,
     "lon": -71.1053361,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A Cambridge biotech company pioneering macrocycle-based drug discovery — ring-shaped molecules with unique binding properties that open new doors in medicine. It's one of hundreds of cutting-edge life science companies that have made this neighborhood the biotech capital of the world.",
+    "summary_fr": "Une entreprise de biotechnologie de Cambridge innovant dans la découverte de médicaments à base de macrocycles — des molécules en forme d'anneau aux propriétés de liaison uniques qui ouvrent de nouvelles avenues en médecine. C'est l'une des centaines d'entreprises de sciences de la vie qui ont fait de ce quartier la capitale mondiale de la biotech."
   },
   {
     "t": 1648.0,
     "name": "Bluebikes - MIT Pacific St at Purrington",
     "lat": 42.3595814,
     "lon": -71.1013326,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A Bluebikes station serving the quieter western edge of the MIT campus, where residential streets meet research buildings. A few pedal strokes from here and you'd be crossing into Cambridgeport proper.",
+    "summary_fr": "Une station Bluebikes desservant le bord ouest plus tranquille du campus du MIT, là où les rues résidentielles rencontrent les bâtiments de recherche. À quelques coups de pédale d'ici, tu te retrouverais dans le vrai Cambridgeport."
   },
   {
     "t": 1674.0,
     "name": "Pacific Street Cafe",
     "lat": 42.3602168,
     "lon": -71.102461,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A low-key neighborhood café serving the MIT and Cambridgeport community, the kind of spot where regulars know the staff by name. It's the anti-Starbucks of Cambridge — small, personal, and exactly what a neighborhood deserves.",
+    "summary_fr": "Un café de quartier discret servant la communauté du MIT et de Cambridgeport, le genre d'endroit où les habitués connaissent le personnel par leur prénom. C'est l'anti-Starbucks de Cambridge — petit, personnel, et exactement ce qu'un quartier mérite."
   },
   {
     "t": 1824.0,
     "name": "Bright Horizons",
     "lat": 42.3628087,
     "lon": -71.1018743,
-    "source": "osm"
+    "source": "osm",
+    "osmTag": "amenity",
+    "summary": "A childcare and early education center that keeps the wheels turning for countless Cambridge families and MIT researchers who need reliable care for their little ones. Behind every great discovery, there's someone making sure the kids are happy.",
+    "summary_fr": "Un centre de garde et d'éducation préscolaire qui maintient la machine en marche pour d'innombrables familles de Cambridge et chercheurs du MIT qui ont besoin d'une garde fiable pour leurs tout-petits. Derrière chaque grande découverte, il y a quelqu'un qui s'assure que les enfants sont heureux."
   }
 ]

@@ -26,10 +26,18 @@ function pickVoice() {
   const score = v => {
     if (!v.lang.startsWith(prefix)) return 0;
     const n = v.name;
+    if (voiceLang === "fr") {
+      const isCA = v.lang.startsWith("fr-CA");
+      if (isCA && /Google/.test(n))            return 6;
+      if (isCA && /Microsoft.*Natural/.test(n)) return 5;
+      if (isCA)                                 return 4;
+      if (/Google/.test(n))                     return 3;
+      if (/Microsoft.*Natural/.test(n))         return 2;
+      return 1;
+    }
     if (/Google/.test(n) && !/eSpeak/.test(n)) return 4;
     if (/Microsoft.*Natural/.test(n))           return 3;
     if (/Microsoft/.test(n))                    return 2;
-    if (!v.localService)                        return 1;
     return 1;
   };
   const ranked = [...voices].sort((a, b) => score(b) - score(a));
@@ -38,7 +46,7 @@ function pickVoice() {
 
 function applyVoice(utt) {
   if (preferredVoice) utt.voice = preferredVoice;
-  utt.lang  = voiceLang === "fr" ? "fr-FR" : "en-US";
+  utt.lang  = voiceLang === "fr" ? "fr-CA" : "en-US";
   utt.rate  = 0.92;
   utt.pitch = 1.05;
 }
@@ -68,8 +76,13 @@ function initLangToggle() {
       );
       cancelSpeech();
       pickVoice();
+      buildTimeline(landmarks); // re-render cards in the new language
     });
   });
+}
+
+function fetchInfo(lm) {
+  return voiceLang === "fr" ? fetchLandmarkInfoFr(lm) : fetchLandmarkInfo(lm);
 }
 
 let speakQueue = Promise.resolve();
@@ -90,27 +103,46 @@ function cancelSpeech() {
 }
 
 async function fetchLandmarkInfoFr(lm) {
-  const cacheKey = `otg_summary_fr_${lm.name}`;
-  const cached = localStorage.getItem(cacheKey);
-  if (cached) return JSON.parse(cached);
-  try {
-    const params = new URLSearchParams({
-      action: "query", prop: "extracts", exintro: true,
-      exchars: 500, titles: lm.name, format: "json", origin: "*",
-    });
-    const resp = await fetch(`https://fr.wikipedia.org/w/api.php?${params}`);
-    const data = await resp.json();
-    const page = Object.values(data.query.pages)[0];
-    if (!page.missing) {
-      const text = page.extract?.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
-      if (text && text.length > 20) {
-        const result = { text: text.slice(0, 500) };
-        localStorage.setItem(cacheKey, JSON.stringify(result));
-        return result;
-      }
+  if (dykCacheFr.has(lm.name)) return dykCacheFr.get(lm.name);
+
+  let result = null;
+
+  // 1. Pre-built Claude FR summary (build time — best quality)
+  if (lm.summary_fr) {
+    result = { text: lm.summary_fr, link: lm.link || null };
+  }
+
+  // 2. French Wikipedia (localStorage cache)
+  if (!result) {
+    const lsKey = `otg_summary_fr_v1_${lm.name}`;
+    const stored = localStorage.getItem(lsKey);
+    if (stored) {
+      result = JSON.parse(stored);
+    } else {
+      try {
+        const params = new URLSearchParams({
+          action: "query", prop: "extracts", exintro: true,
+          exchars: 500, titles: lm.name, format: "json", origin: "*",
+        });
+        const resp = await fetch(`https://fr.wikipedia.org/w/api.php?${params}`);
+        const data = await resp.json();
+        const page = Object.values(data.query.pages)[0];
+        if (!page.missing) {
+          const text = page.extract?.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+          if (text && text.length > 20) {
+            result = { text: text.slice(0, 500), link: lm.link || null };
+            localStorage.setItem(lsKey, JSON.stringify(result));
+          }
+        }
+      } catch (_) {}
     }
-  } catch (_) {}
-  return fetchLandmarkInfo(lm);
+  }
+
+  // 3. Fall back to English
+  if (!result) result = await fetchLandmarkInfo(lm);
+
+  dykCacheFr.set(lm.name, result);
+  return result;
 }
 
 function speakLandmark(lm) {
@@ -126,12 +158,17 @@ function speakLandmark(lm) {
     const clean = info.text.replace(/\(.*?\)/g, "").replace(/\s+/g, " ").trim();
     const excerpt = clean.length > 400 ? clean.slice(0, 400) + "…" : clean;
     await speakUtterance(excerpt);
+    // Auto-close the DYK popup if it's still showing this landmark
+    if (currentDykLm?.t === lm.t) {
+      document.getElementById("did-you-know").classList.add("hidden");
+      currentDykLm = null;
+    }
   });
 }
 
 // ── Cache key ──────────────────────────────────────────────────────────────
 // Bump this when the landmark schema changes to auto-bust stale caches.
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 
 function routeCacheKey(r) {
   const a = r[0], b = r[Math.floor(r.length / 2)], c = r[r.length - 1];
@@ -180,8 +217,9 @@ async function fetchOverpassLandmarks(r) {
     const { point, dist } = nearestRoutePoint(el.lat, el.lon, r);
     if (dist <= 50) {
       seen.add(name);
-      const osmType = el.tags?.amenity || el.tags?.tourism || el.tags?.historic || el.tags?.leisure || "place";
-      results.push({ t: point.t, name, lat: el.lat, lon: el.lon, source: "osm", osmType });
+      const osmTag = ["historic","tourism","leisure","amenity"].find(k => el.tags?.[k]) ?? "amenity";
+      const osmType = el.tags?.[osmTag] || "place";
+      results.push({ t: point.t, name, lat: el.lat, lon: el.lon, source: "osm", osmTag, osmType });
     }
   }
   return results;
@@ -330,6 +368,7 @@ async function selectRun(run) {
   shownLandmarks.clear();
   activeTimelineT = null;
   dykCache.clear();
+  dykCacheFr.clear();
   if (zoomResetTimer) { clearTimeout(zoomResetTimer); zoomResetTimer = null; }
   cancelSpeech();
 
@@ -399,11 +438,37 @@ function resetHUD() {
   document.getElementById("hud-time").textContent = "0:00";
 }
 
+// ── Landmark filters ───────────────────────────────────────────────────────
+const FILTERS = { historic: true, places: true, stores: false, wiki: true };
+
+function filterLandmarks(lms) {
+  return lms.filter(lm => {
+    if (lm.source === "wikipedia") return FILTERS.wiki;
+    const tag = lm.osmTag ?? "amenity";
+    if (tag === "historic")                      return FILTERS.historic;
+    if (tag === "tourism" || tag === "leisure")  return FILTERS.places;
+    return FILTERS.stores;
+  });
+}
+
+function initFilters() {
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    const key = btn.dataset.filter;
+    btn.classList.toggle("active", FILTERS[key]);
+    btn.addEventListener("click", () => {
+      FILTERS[key] = !FILTERS[key];
+      btn.classList.toggle("active", FILTERS[key]);
+      buildTimeline(landmarks);
+      addLandmarkPins();
+    });
+  });
+}
+
 function addLandmarkPins() {
   if (!map) return;
   if (pinsLayer) { map.removeLayer(pinsLayer); pinsLayer = null; }
   pinsLayer = L.layerGroup().addTo(map);
-  landmarks.forEach(lm => {
+  filterLandmarks(landmarks).forEach(lm => {
     const color = lm.source === "wikipedia" ? "#c084fc" : "#ff2d78";
     L.circleMarker([lm.lat, lm.lon], {
       radius: 4, color, fillColor: color, fillOpacity: 0.85, weight: 1,
@@ -419,7 +484,7 @@ function buildTimeline(lms) {
   if (!list) return;
   list.innerHTML = "";
 
-  lms.forEach(lm => {
+  filterLandmarks(lms).forEach(lm => {
     const card = document.createElement("div");
     card.className = "timeline-card";
     card.dataset.t = lm.t;
@@ -451,7 +516,7 @@ function buildTimeline(lms) {
     card.addEventListener("click", activate);
     card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); } });
 
-    fetchLandmarkInfo(lm).then(info => {
+    fetchInfo(lm).then(info => {
       const p = card.querySelector(".timeline-text");
       if (p && info?.text) p.textContent = info.text;
     });
@@ -470,7 +535,8 @@ function buildTimeline(lms) {
 }
 
 // ── Did You Know ───────────────────────────────────────────────────────────
-const dykCache = new Map();
+const dykCache   = new Map(); // EN results
+const dykCacheFr = new Map(); // FR results — separate to avoid EN bleed-through
 
 async function fetchWikipediaExtract(title) {
   const url = `https://en.wikipedia.org/w/api.php?` + new URLSearchParams({
@@ -538,14 +604,15 @@ function showDidYouKnow(lm) {
   const source = document.getElementById("dyk-source");
   const link   = document.getElementById("dyk-link");
 
+  currentDykLm = lm;
   title.textContent  = lm.name;
-  source.textContent = lm.source === "wikipedia" ? "// Wikipedia" : `// OpenStreetMap · ${(lm.osmType || "place").replace(/_/g, " ")}`;
+  source.textContent = lm.source === "wikipedia" ? "// Wikipedia" : `// OpenStreetMap · ${(lm.osmTag || lm.osmType || "place").replace(/_/g, " ")}`;
   body.textContent   = "Loading…";
   body.classList.add("loading");
   link.classList.add("hidden");
   panel.classList.remove("hidden");
 
-  fetchLandmarkInfo(lm).then(info => {
+  fetchInfo(lm).then(info => {
     body.textContent = info.text;
     body.classList.remove("loading");
     if (info.link) {
@@ -555,11 +622,14 @@ function showDidYouKnow(lm) {
   });
 }
 
+let currentDykLm = null;
+
 function initDidYouKnow() {
   const panel = document.getElementById("did-you-know");
-  document.getElementById("dyk-close").addEventListener("click", () => panel.classList.add("hidden"));
-  panel.addEventListener("click", e => { if (e.target === panel) panel.classList.add("hidden"); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") panel.classList.add("hidden"); });
+  const close = () => { panel.classList.add("hidden"); currentDykLm = null; };
+  document.getElementById("dyk-close").addEventListener("click", close);
+  panel.addEventListener("click", e => { if (e.target === panel) close(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
 }
 
 let activeTimelineT = null;
@@ -743,4 +813,5 @@ initDidYouKnow();
 initRunsPicker();
 initVoiceBtn();
 initLangToggle();
+initFilters();
 loadData();
