@@ -285,11 +285,13 @@ def strava_get_leaderboard(segment_id, access_token):
             timeout=10,
         )
         resp.raise_for_status()
-        entries = resp.json().get("entries", [])
+        data = resp.json()
+        entries = data.get("entries", [])
         if entries:
             return {
-                "elapsed_time": entries[0]["elapsed_time"],
+                "elapsed_time": entries[0].get("elapsed_time"),
                 "athlete_name": entries[0].get("athlete_name", ""),
+                "entry_count": data.get("entry_count"),
             }
     except Exception as e:
         print(f"    Warning: leaderboard fetch failed: {e}")
@@ -347,8 +349,11 @@ def build_segments(activity, access_token):
         if prev_pr:
             seg["previous_pr"] = prev_pr
         if kom:
-            seg["kom_elapsed_time"] = kom["elapsed_time"]
-            seg["kom_athlete"] = kom["athlete_name"]
+            if kom.get("elapsed_time"):
+                seg["kom_elapsed_time"] = kom["elapsed_time"]
+            seg["kom_athlete"] = kom.get("athlete_name", "")
+            if kom.get("entry_count"):
+                seg["total_efforts"] = kom["entry_count"]
 
         # Rank from activity effort
         rank = effort.get("rank")

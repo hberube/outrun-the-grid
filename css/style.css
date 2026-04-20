@@ -794,4 +794,12 @@ html, body {
     text-align: center;
     border-radius: 10px;
   }
+
+  .segment-card {
+    top: auto;
+    bottom: 1rem;
+    left: 0.75rem;
+    min-width: 160px;
+    font-size: 0.85em;
+  }
 }

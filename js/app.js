@@ -821,7 +821,9 @@ function finalizeSegmentCard(seg) {
   if (seg.athlete_rank) {
     const rankEl = document.createElement("div");
     rankEl.className = "seg-rank";
-    rankEl.textContent = `RANK #${seg.athlete_rank}`;
+    rankEl.textContent = seg.total_efforts
+      ? `RANK #${seg.athlete_rank} / ${seg.total_efforts}`
+      : `RANK #${seg.athlete_rank}`;
     document.getElementById("segment-card").appendChild(rankEl);
   }
   document.getElementById("segment-card").classList.add("finalized");
