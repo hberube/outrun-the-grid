@@ -1,0 +1,18 @@
+{
+  "name": "Outrun the Grid",
+  "short_name": "OTG",
+  "description": "Sync your run footage with GPS telemetry",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
