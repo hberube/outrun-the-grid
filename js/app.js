@@ -323,7 +323,7 @@ async function loadData() {
     const config = await configResp.json();
     LANDMARK_WINDOW = config.landmarkWindowSeconds ?? 2;
     LANDMARK_SOURCES = config.landmarkSources ?? ["overpass", "wikipedia"];
-    runs = await runsResp.json();
+    runs = (await runsResp.json()).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
   } catch (e) {
     console.warn("Could not load config/runs:", e.message);
   }

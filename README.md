@@ -96,6 +96,7 @@ Open `runs.json` and add an entry to the array:
 | `distance` | Display string, e.g. `5K`, `10K`, `Half` |
 | `videoId` | YouTube video ID (the part after `?v=`) |
 | `gpx` | GPX filename (informational only, not fetched by the app) |
+| `order` | *(optional)* Integer controlling sort order in the picker; lowest number loads first. Runs without this field sort last. |
 
 ### Step 6 — Preview locally
 
