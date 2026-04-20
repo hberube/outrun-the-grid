@@ -501,6 +501,7 @@ html, body {
 
 #timeline-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 0.5rem;
   scrollbar-width: thin;
@@ -672,7 +673,9 @@ html, body {
 
   #route-timeline {
     display: flex;
-    max-height: 50vh;
+    height: 40vh;
+    max-height: 40vh;
+    flex-shrink: 0;
   }
 
   /* DYK: bottom sheet */
