@@ -16,6 +16,13 @@ let routeBounds = null;
 let zoomResetTimer = null;
 let activeSegment = null;
 let segmentFinishTimer = null;
+let kmLayer = null;
+let routeAnimFrame = null;
+let pendingSeekT = 0;
+
+// ── URL params ─────────────────────────────────────────────────────────────
+const URL_RUN_ID = new URLSearchParams(location.search).get("run");
+const URL_T      = parseInt(new URLSearchParams(location.search).get("t")) || 0;
 
 // ── Voice narration ────────────────────────────────────────────────────────
 let voiceEnabled = localStorage.getItem("otg_voice") === "true";
@@ -335,14 +342,17 @@ async function loadData() {
   buildRunsPicker();
   initMap();
 
-  // Load first run by default (also calls tryInitPlayer internally)
-  if (runs.length) await selectRun(runs[0]);
+  // Load first run by default, or the run specified in the URL
+  const targetRun = URL_RUN_ID ? (runs.find(r => r.id === URL_RUN_ID) ?? runs[0]) : runs[0];
+  if (URL_RUN_ID && targetRun?.id === URL_RUN_ID && URL_T > 0) pendingSeekT = URL_T;
+  if (targetRun) await selectRun(targetRun);
 }
 
 async function selectRun(run) {
   if (activeRunId === run.id) return;
   activeRunId = run.id;
   VIDEO_ID = run.videoId;
+  history.replaceState({}, "", `?run=${run.id}`);
 
   // Load route data
   try {
@@ -407,6 +417,10 @@ async function selectRun(run) {
     } catch (_) {}
 
     buildTimeline(landmarks);
+    addKmMarkers();
+    buildElevationProfile();
+    buildStatsCard();
+    buildProgressBar();
   }
 }
 
@@ -425,17 +439,18 @@ function initMap() {
 function resetMap() {
   if (!map) return;
 
-  // Remove old layers
+  if (routeAnimFrame) { cancelAnimationFrame(routeAnimFrame); routeAnimFrame = null; }
   if (routeLayer) { map.removeLayer(routeLayer); routeLayer = null; }
   if (pinsLayer)  { map.removeLayer(pinsLayer);  pinsLayer = null; }
+  if (kmLayer)    { map.removeLayer(kmLayer);    kmLayer = null; }
   if (marker)     { map.removeLayer(marker);      marker = null; }
 
   if (!route.length) return;
 
   const latlngs = route.map(p => [p.lat, p.lon]);
-  routeLayer = L.polyline(latlngs, { color: "#66fcf1", weight: 3, opacity: 0.85 }).addTo(map);
-  routeBounds = routeLayer.getBounds();
+  routeBounds = L.latLngBounds(latlngs);
   map.fitBounds(routeBounds, { padding: [24, 24] });
+  drawPaceRoute();
 
   const neonIcon = L.divIcon({
     className: "",
@@ -449,6 +464,205 @@ function resetHUD() {
   document.getElementById("hud-pace").textContent = "--:--";
   document.getElementById("hud-ele").textContent  = "---m";
   document.getElementById("hud-time").textContent = "0:00";
+}
+
+// ── Distance utility ───────────────────────────────────────────────────────
+function distMeters(p1, p2) {
+  const φ = ((p1.lat + p2.lat) / 2) * Math.PI / 180;
+  const dx = (p2.lon - p1.lon) * Math.cos(φ) * 111320;
+  const dy = (p2.lat - p1.lat) * 110540;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+// ── Pace-colored animated route ────────────────────────────────────────────
+function paceColor(pace, minPace, maxPace) {
+  if (pace == null || pace > 15) return "#444444";
+  const t = Math.max(0, Math.min(1, (pace - minPace) / (maxPace - minPace)));
+  const r = Math.round(102 + t * (255 - 102));
+  const g = Math.round(252 + t * (45  - 252));
+  const b = Math.round(241 + t * (120 - 241));
+  return `#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;
+}
+
+function drawPaceRoute() {
+  routeLayer = L.layerGroup().addTo(map);
+  const validPaces = route.filter(p => p.pace != null && p.pace < 15).map(p => p.pace);
+  const minPace = validPaces.length ? Math.min(...validPaces) : 4;
+  const maxPace = validPaces.length ? Math.max(...validPaces) : 10;
+
+  const segs = [];
+  for (let i = 1; i < route.length; i++) {
+    const p1 = route[i - 1], p2 = route[i];
+    segs.push(L.polyline([[p1.lat, p1.lon], [p2.lat, p2.lon]], {
+      color: paceColor(p2.pace, minPace, maxPace),
+      weight: 3, opacity: 0.9, interactive: false,
+    }));
+  }
+
+  let drawn = 0;
+  const batch = Math.max(1, Math.ceil(segs.length / 50));
+  function frame() {
+    const end = Math.min(drawn + batch, segs.length);
+    for (; drawn < end; drawn++) segs[drawn].addTo(routeLayer);
+    if (drawn < segs.length) routeAnimFrame = requestAnimationFrame(frame);
+    else routeAnimFrame = null;
+  }
+  routeAnimFrame = requestAnimationFrame(frame);
+}
+
+// ── Km markers ─────────────────────────────────────────────────────────────
+function addKmMarkers() {
+  if (!map || !route.length) return;
+  kmLayer = L.layerGroup().addTo(map);
+  let cumDist = 0, nextKm = 1;
+  for (let i = 1; i < route.length; i++) {
+    cumDist += distMeters(route[i - 1], route[i]);
+    if (cumDist >= nextKm * 1000) {
+      const pt = route[i];
+      L.marker([pt.lat, pt.lon], {
+        icon: L.divIcon({
+          className: "",
+          html: `<div class="km-marker">${nextKm}</div>`,
+          iconSize: [20, 20], iconAnchor: [10, 10],
+        }),
+        interactive: false, zIndexOffset: -100,
+      }).addTo(kmLayer);
+      nextKm++;
+    }
+  }
+}
+
+// ── Stats card ─────────────────────────────────────────────────────────────
+function buildStatsCard() {
+  if (!route.length) return;
+  let dist = 0;
+  for (let i = 1; i < route.length; i++) dist += distMeters(route[i - 1], route[i]);
+
+  const duration = route[route.length - 1].t - route[0].t;
+  const validPaces = route.map(p => p.pace).filter(p => p != null && p < 15);
+  const avgPace = validPaces.length
+    ? validPaces.reduce((a, b) => a + b, 0) / validPaces.length
+    : null;
+
+  let elevGain = 0;
+  for (let i = 1; i < route.length; i++) {
+    const dEle = (route[i].ele ?? 0) - (route[i - 1].ele ?? 0);
+    if (dEle > 0) elevGain += dEle;
+  }
+
+  const distStr = dist >= 1000 ? `${(dist / 1000).toFixed(2)} km` : `${Math.round(dist)} m`;
+  const mm = Math.floor(duration / 60), ss = Math.floor(duration % 60).toString().padStart(2, "0");
+  let paceStr = "--";
+  if (avgPace != null) {
+    const pm = Math.floor(avgPace), ps = Math.round((avgPace - pm) * 60).toString().padStart(2, "0");
+    paceStr = `${pm}:${ps}/km`;
+  }
+
+  document.getElementById("stat-dist").textContent    = distStr;
+  document.getElementById("stat-time-val").textContent = `${mm}:${ss}`;
+  document.getElementById("stat-pace").textContent    = paceStr;
+  document.getElementById("stat-elev").textContent    = `+${Math.round(elevGain)} m`;
+  document.getElementById("stats-card").classList.remove("hidden");
+}
+
+function hideStatsCard() {
+  document.getElementById("stats-card")?.classList.add("hidden");
+}
+
+// ── Video progress bar ─────────────────────────────────────────────────────
+function buildProgressBar() {
+  const bar = document.getElementById("video-progress");
+  if (!bar) return;
+  const duration = ytPlayer?.getDuration?.() || 0;
+  if (!duration) return;
+  bar.querySelectorAll(".progress-dot").forEach(d => d.remove());
+  filterLandmarks(landmarks).forEach(lm => {
+    const pct = (lm.t / duration) * 100;
+    if (pct < 0 || pct > 100) return;
+    const dot = document.createElement("div");
+    dot.className = "progress-dot";
+    const color = lm.source === "wikipedia" ? "#c084fc" : "#ff2d78";
+    dot.style.cssText = `left:${pct.toFixed(2)}%;background:${color}`;
+    dot.title = lm.name;
+    dot.addEventListener("click", e => { e.stopPropagation(); seekToLandmark(lm); });
+    bar.appendChild(dot);
+  });
+}
+
+function updateProgressBar(t) {
+  const fill = document.getElementById("video-progress-fill");
+  if (!fill) return;
+  const duration = ytPlayer?.getDuration?.() || 0;
+  if (!duration) return;
+  fill.style.width = `${Math.min(100, (t / duration) * 100).toFixed(2)}%`;
+}
+
+function initProgressBar() {
+  const bar = document.getElementById("video-progress");
+  if (!bar) return;
+  bar.addEventListener("click", e => {
+    if (!ytPlayer || typeof ytPlayer.seekTo !== "function") return;
+    const duration = ytPlayer.getDuration?.() || 0;
+    if (!duration) return;
+    const rect = bar.getBoundingClientRect();
+    const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const t    = pct * duration;
+    ytPlayer.seekTo(t, true);
+    ytPlayer.playVideo();
+    shownLandmarks.clear();
+    history.replaceState({}, "", `?run=${activeRunId}&t=${Math.floor(t)}`);
+  });
+}
+
+// ── Elevation profile ──────────────────────────────────────────────────────
+function buildElevationProfile() {
+  const pathEl = document.getElementById("elevation-path");
+  const fillEl = document.getElementById("elevation-fill");
+  if (!pathEl || !route.length) return;
+
+  const pts = route.filter(p => p.ele != null);
+  if (!pts.length) return;
+  const eles   = pts.map(p => p.ele);
+  const minEle = Math.min(...eles), maxEle = Math.max(...eles);
+  const eleRange = maxEle - minEle || 1;
+  const tMax = route[route.length - 1].t || 1;
+  const W = 1000, H = 60, PAD = 4;
+
+  const coords = pts.map(p => {
+    const x = (p.t / tMax) * W;
+    const y = H - PAD - ((p.ele - minEle) / eleRange) * (H - PAD * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  const stroke = "M" + coords.join(" L");
+  const lastX  = (pts[pts.length - 1].t / tMax * W).toFixed(1);
+  pathEl.setAttribute("d", stroke);
+  fillEl.setAttribute("d", `${stroke} L${lastX},${H} L0,${H} Z`);
+  fillEl.setAttribute("fill", "rgba(102,252,241,0.08)");
+}
+
+function updateElevationPlayhead(t) {
+  const line = document.getElementById("elevation-playhead");
+  if (!line || !route.length) return;
+  const x = ((t / (route[route.length - 1].t || 1)) * 1000).toFixed(1);
+  line.setAttribute("x1", x);
+  line.setAttribute("x2", x);
+}
+
+function initElevationProfile() {
+  const svg = document.getElementById("elevation-svg");
+  if (!svg) return;
+  svg.addEventListener("click", e => {
+    if (!ytPlayer || typeof ytPlayer.seekTo !== "function" || !route.length) return;
+    const rect   = svg.getBoundingClientRect();
+    const pct    = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const tMax   = route[route.length - 1].t;
+    const targetT = pct * tMax;
+    ytPlayer.seekTo(targetT, true);
+    ytPlayer.playVideo();
+    shownLandmarks.clear();
+    history.replaceState({}, "", `?run=${activeRunId}&t=${Math.floor(targetT)}`);
+  });
 }
 
 // ── Landmark filters ───────────────────────────────────────────────────────
@@ -483,6 +697,7 @@ function seekToLandmark(lm) {
     ytPlayer.seekTo(lm.t, true);
     ytPlayer.playVideo();
     shownLandmarks.clear();
+    history.replaceState({}, "", `?run=${activeRunId}&t=${Math.floor(lm.t)}`);
   }
 }
 
@@ -738,6 +953,8 @@ function onTick() {
   checkLandmarks(t);
   checkSegments(t);
   updateActiveTimelineCard(t);
+  updateProgressBar(t);
+  updateElevationPlayhead(t);
 }
 
 // ── HUD ────────────────────────────────────────────────────────────────────
@@ -897,11 +1114,19 @@ function onYouTubeIframeAPIReady() {
 }
 
 function onPlayerStateChange(event) {
-  if (event.data === 1) {
+  if (event.data === 1) { // playing
     if (!syncInterval) syncInterval = setInterval(onTick, 250);
+    hideStatsCard();
   } else {
     clearInterval(syncInterval);
     syncInterval = null;
+  }
+  if (event.data === 5 || event.data === 1) { // cued or playing — video metadata ready
+    buildProgressBar();
+    if (pendingSeekT > 0 && event.data === 5) {
+      ytPlayer.seekTo(pendingSeekT, true);
+      pendingSeekT = 0;
+    }
   }
 }
 
@@ -934,6 +1159,7 @@ function buildRunsPicker() {
       </div>
     `;
     card.addEventListener("click", () => {
+      pendingSeekT = 0;
       document.querySelectorAll(".run-card").forEach(c => c.classList.remove("active"));
       card.classList.add("active");
       document.getElementById("runs-panel").classList.add("hidden");
@@ -957,4 +1183,6 @@ initRunsPicker();
 initVoiceBtn();
 initLangToggle();
 initFilters();
+initProgressBar();
+initElevationProfile();
 loadData();

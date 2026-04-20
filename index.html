@@ -36,6 +36,19 @@
       <div class="panel-label">FOOTAGE</div>
       <div id="player-wrapper">
         <div id="player"></div>
+        <div id="stats-card" class="stats-card hidden">
+          <div class="stats-title">RUN STATS</div>
+          <div class="stats-grid">
+            <div class="stat-item"><span class="stat-label">DIST</span><span id="stat-dist" class="stat-value">-</span></div>
+            <div class="stat-item"><span class="stat-label">TIME</span><span id="stat-time-val" class="stat-value">-</span></div>
+            <div class="stat-item"><span class="stat-label">AVG PACE</span><span id="stat-pace" class="stat-value">-</span></div>
+            <div class="stat-item"><span class="stat-label">ELEV +</span><span id="stat-elev" class="stat-value">-</span></div>
+          </div>
+          <div class="stats-dismiss">PRESS PLAY TO DISMISS</div>
+        </div>
+      </div>
+      <div id="video-progress">
+        <div id="video-progress-fill"></div>
       </div>
     </section>
 
@@ -54,6 +67,13 @@
             <button class="lang-btn" data-lang="fr" title="Narration en français">FR</button>
           </div>
         </div>
+      </div>
+      <div id="elevation-profile">
+        <svg id="elevation-svg" viewBox="0 0 1000 60" preserveAspectRatio="none">
+          <path id="elevation-fill" stroke="none"/>
+          <path id="elevation-path" fill="none" stroke="#66fcf1" stroke-width="1.5"/>
+          <line id="elevation-playhead" x1="0" y1="0" x2="0" y2="60" stroke="#ff2d78" stroke-width="1.5" opacity="0.8"/>
+        </svg>
       </div>
       <div id="route-timeline">
         <div class="timeline-header">

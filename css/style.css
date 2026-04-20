@@ -567,6 +567,127 @@ html, body {
   margin: 0;
 }
 
+/* ── Stats card ── */
+.stats-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid rgba(102, 252, 241, 0.3);
+  border-radius: 8px;
+  padding: 1.25rem 1.75rem;
+  z-index: 200;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  pointer-events: auto;
+  min-width: 220px;
+}
+
+.stats-title {
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  color: var(--dim);
+  margin-bottom: 0.75rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1.25rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stat-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+}
+
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--cyan);
+}
+
+.stats-dismiss {
+  margin-top: 0.65rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  color: rgba(160, 160, 160, 0.4);
+}
+
+/* ── Video progress bar ── */
+#video-progress {
+  position: relative;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+#video-progress:hover { background: rgba(255, 255, 255, 0.14); }
+
+#video-progress-fill {
+  height: 100%;
+  background: var(--cyan);
+  width: 0%;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.progress-dot {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.12s ease;
+}
+
+.progress-dot:hover { transform: translate(-50%, -50%) scale(2.2); z-index: 3; }
+
+/* ── Elevation profile ── */
+#elevation-profile {
+  height: 48px;
+  flex-shrink: 0;
+  background: rgba(10, 10, 10, 0.5);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+#elevation-svg { width: 100%; height: 100%; display: block; }
+
+/* ── Km markers ── */
+.km-marker {
+  width: 18px;
+  height: 18px;
+  background: rgba(10, 10, 10, 0.88);
+  border: 1px solid rgba(102, 252, 241, 0.4);
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
 /* ── Leaflet custom marker ── */
 .neon-dot {
   width: 14px;
@@ -802,4 +923,9 @@ html, body {
     min-width: 160px;
     font-size: 0.85em;
   }
+
+  #elevation-profile { display: none; }
+
+  .stats-card { min-width: 180px; padding: 1rem 1.25rem; }
+  .stat-value { font-size: 0.95rem; }
 }
