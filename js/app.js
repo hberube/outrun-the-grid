@@ -562,32 +562,31 @@ function buildStatsCard() {
   document.getElementById("stat-time-val").textContent = `${mm}:${ss}`;
   document.getElementById("stat-pace").textContent    = paceStr;
   document.getElementById("stat-elev").textContent    = `+${Math.round(elevGain)} m`;
-  if (statsCountdown) { clearInterval(statsCountdown); statsCountdown = null; }
+  if (statsCountdown) { clearTimeout(statsCountdown); statsCountdown = null; }
   const dismiss = document.querySelector(".stats-dismiss");
   if (dismiss) dismiss.textContent = "CLICK TO DISMISS";
   document.getElementById("stats-card").classList.remove("hidden");
 }
 
 function hideStatsCard() {
-  if (statsCountdown) { clearInterval(statsCountdown); statsCountdown = null; }
+  if (statsCountdown) { clearTimeout(statsCountdown); statsCountdown = null; }
   document.getElementById("stats-card")?.classList.add("hidden");
 }
 
 function startStatsCountdown() {
   const card = document.getElementById("stats-card");
   if (!card || card.classList.contains("hidden")) return;
-  if (statsCountdown) { clearInterval(statsCountdown); statsCountdown = null; }
+  if (statsCountdown) return; // already running — don't restart on every state=1 event
   let n = 10;
   const label = card.querySelector(".stats-dismiss");
-  if (label) label.textContent = `CLOSING IN ${n}…`;
-  statsCountdown = setInterval(() => {
+  function tick() {
+    if (card.classList.contains("hidden")) { statsCountdown = null; return; }
+    if (n <= 0) { hideStatsCard(); return; }
+    if (label) label.textContent = `CLOSING IN ${n}…`;
     n--;
-    if (n <= 0) {
-      hideStatsCard();
-    } else {
-      if (label) label.textContent = `CLOSING IN ${n}…`;
-    }
-  }, 1000);
+    statsCountdown = setTimeout(tick, 1000);
+  }
+  tick();
 }
 
 // ── Video progress bar ─────────────────────────────────────────────────────
