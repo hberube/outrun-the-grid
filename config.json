@@ -1,4 +1,5 @@
 {
   "landmarkWindowSeconds": 2,
-  "landmarkSources": ["overpass", "wikipedia"]
+  "landmarkSources": ["overpass", "wikipedia"],
+  "popupLifespanSeconds": 15
 }

@@ -1,6 +1,7 @@
 // ── State ──────────────────────────────────────────────────────────────────
 let VIDEO_ID = null;
 let LANDMARK_WINDOW = 2;
+let DYK_LIFESPAN = 15; // seconds before popup auto-closes
 let LANDMARK_SOURCES = ["overpass", "wikipedia"];
 let ytPlayer = null;
 let route = [];
@@ -170,10 +171,7 @@ function speakLandmark(lm) {
     const excerpt = clean.length > 400 ? clean.slice(0, 400) + "…" : clean;
     await speakUtterance(excerpt);
     // Auto-close the DYK popup if it's still showing this landmark
-    if (currentDykLm?.t === lm.t) {
-      document.getElementById("did-you-know").classList.add("hidden");
-      currentDykLm = null;
-    }
+    if (currentDykLm?.t === lm.t) closeDyk();
   });
 }
 
@@ -334,6 +332,7 @@ async function loadData() {
     const config = await configResp.json();
     LANDMARK_WINDOW = config.landmarkWindowSeconds ?? 2;
     LANDMARK_SOURCES = config.landmarkSources ?? ["overpass", "wikipedia"];
+    DYK_LIFESPAN = config.popupLifespanSeconds ?? 15;
     runs = (await runsResp.json()).sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
   } catch (e) {
     console.warn("Could not load config/runs:", e.message);
@@ -902,6 +901,7 @@ function showDidYouKnow(lm) {
   const source = document.getElementById("dyk-source");
   const link   = document.getElementById("dyk-link");
 
+  if (dykTimer) { clearTimeout(dykTimer); dykTimer = null; }
   currentDykLm = lm;
   title.textContent  = lm.name;
   source.textContent = lm.source === "wikipedia" ? "// Wikipedia" : `// OpenStreetMap · ${(lm.osmTag || lm.osmType || "place").replace(/_/g, " ")}`;
@@ -909,6 +909,7 @@ function showDidYouKnow(lm) {
   body.classList.add("loading");
   link.classList.add("hidden");
   panel.classList.remove("hidden");
+  dykTimer = setTimeout(closeDyk, DYK_LIFESPAN * 1000);
 
   fetchInfo(lm).then(info => {
     body.textContent = info.text;
@@ -921,13 +922,19 @@ function showDidYouKnow(lm) {
 }
 
 let currentDykLm = null;
+let dykTimer = null;
+
+function closeDyk() {
+  if (dykTimer) { clearTimeout(dykTimer); dykTimer = null; }
+  document.getElementById("did-you-know").classList.add("hidden");
+  currentDykLm = null;
+}
 
 function initDidYouKnow() {
   const panel = document.getElementById("did-you-know");
-  const close = () => { panel.classList.add("hidden"); currentDykLm = null; };
-  document.getElementById("dyk-close").addEventListener("click", close);
-  panel.addEventListener("click", e => { if (e.target === panel) close(); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+  document.getElementById("dyk-close").addEventListener("click", closeDyk);
+  panel.addEventListener("click", e => { if (e.target === panel) closeDyk(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeDyk(); });
 }
 
 let activeTimelineT = null;
