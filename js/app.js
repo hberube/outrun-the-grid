@@ -19,6 +19,7 @@ let segmentFinishTimer = null;
 let kmLayer = null;
 let routeAnimFrame = null;
 let pendingSeekT = 0;
+let statsCountdown = null;
 
 // ── URL params ─────────────────────────────────────────────────────────────
 const URL_RUN_ID = new URLSearchParams(location.search).get("run");
@@ -562,11 +563,30 @@ function buildStatsCard() {
   document.getElementById("stat-time-val").textContent = `${mm}:${ss}`;
   document.getElementById("stat-pace").textContent    = paceStr;
   document.getElementById("stat-elev").textContent    = `+${Math.round(elevGain)} m`;
+  if (statsCountdown) { clearInterval(statsCountdown); statsCountdown = null; }
+  const dismiss = document.querySelector(".stats-dismiss");
+  if (dismiss) dismiss.textContent = "CLICK TO DISMISS";
   document.getElementById("stats-card").classList.remove("hidden");
 }
 
 function hideStatsCard() {
+  if (statsCountdown) { clearInterval(statsCountdown); statsCountdown = null; }
   document.getElementById("stats-card")?.classList.add("hidden");
+}
+
+function startStatsCountdown() {
+  const card = document.getElementById("stats-card");
+  if (!card || card.classList.contains("hidden")) return;
+  if (statsCountdown) return; // already running
+  let n = 10;
+  const label = card.querySelector(".stats-dismiss");
+  const tick = () => {
+    if (label) label.textContent = `CLOSING IN ${n}…`;
+    if (n <= 0) hideStatsCard();
+    else n--;
+  };
+  tick();
+  statsCountdown = setInterval(tick, 1000);
 }
 
 // ── Video progress bar ─────────────────────────────────────────────────────
@@ -1116,7 +1136,7 @@ function onYouTubeIframeAPIReady() {
 function onPlayerStateChange(event) {
   if (event.data === 1) { // playing
     if (!syncInterval) syncInterval = setInterval(onTick, 250);
-    hideStatsCard();
+    startStatsCountdown();
   } else {
     clearInterval(syncInterval);
     syncInterval = null;
