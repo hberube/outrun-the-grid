@@ -577,16 +577,18 @@ function hideStatsCard() {
 function startStatsCountdown() {
   const card = document.getElementById("stats-card");
   if (!card || card.classList.contains("hidden")) return;
-  if (statsCountdown) return; // already running
+  if (statsCountdown) { clearInterval(statsCountdown); statsCountdown = null; }
   let n = 10;
   const label = card.querySelector(".stats-dismiss");
-  const tick = () => {
-    if (label) label.textContent = `CLOSING IN ${n}…`;
-    if (n <= 0) hideStatsCard();
-    else n--;
-  };
-  tick();
-  statsCountdown = setInterval(tick, 1000);
+  if (label) label.textContent = `CLOSING IN ${n}…`;
+  statsCountdown = setInterval(() => {
+    n--;
+    if (n <= 0) {
+      hideStatsCard();
+    } else {
+      if (label) label.textContent = `CLOSING IN ${n}…`;
+    }
+  }, 1000);
 }
 
 // ── Video progress bar ─────────────────────────────────────────────────────
