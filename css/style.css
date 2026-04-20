@@ -187,6 +187,7 @@ html, body {
 
 .video-panel {
   border-right: 1px solid var(--border);
+  position: relative;
 }
 
 .map-panel {

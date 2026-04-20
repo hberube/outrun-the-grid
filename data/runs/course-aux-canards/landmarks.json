@@ -1,0 +1,298 @@
+[
+  {
+    "t": 75.0,
+    "name": "Shine Square Pub",
+    "lat": 42.3908778,
+    "lon": -71.1225907,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 79.0,
+    "name": "North Cambridge Senior Center",
+    "lat": 42.3909437,
+    "lon": -71.1227553,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 105.0,
+    "name": "Gustazo Cuban Kitchen & Bar",
+    "lat": 42.3913617,
+    "lon": -71.1227994,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 117.0,
+    "name": "Wasabi at Porter",
+    "lat": 42.3912955,
+    "lon": -71.1234392,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 176.0,
+    "name": "Watson's Corner",
+    "lat": 42.3923077,
+    "lon": -71.124698,
+    "source": "osm",
+    "osmTag": "historic"
+  },
+  {
+    "t": 185.0,
+    "name": "Bank of America",
+    "lat": 42.3924379,
+    "lon": -71.1249591,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 188.0,
+    "name": "Rockland Trust",
+    "lat": 42.3924827,
+    "lon": -71.1250276,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 195.0,
+    "name": "Capucine Montessori School",
+    "lat": 42.392503,
+    "lon": -71.1251486,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 329.0,
+    "name": "Wild Rose Montessori",
+    "lat": 42.3947473,
+    "lon": -71.1275459,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 346.0,
+    "name": "Kadampa Meditation Center Boston",
+    "lat": 42.3950598,
+    "lon": -71.1278728,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 369.0,
+    "name": "Frank's Steak House",
+    "lat": 42.3954311,
+    "lon": -71.1282868,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 423.0,
+    "name": "Greek Corner",
+    "lat": 42.3964671,
+    "lon": -71.1294755,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 436.0,
+    "name": "Umami",
+    "lat": 42.3967011,
+    "lon": -71.1297354,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 442.0,
+    "name": "Qingdao Garden",
+    "lat": 42.3968135,
+    "lon": -71.1298747,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 447.0,
+    "name": "Joe Sent Me",
+    "lat": 42.396918,
+    "lon": -71.1299636,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 498.0,
+    "name": "Cambridge House of Pizza",
+    "lat": 42.3973696,
+    "lon": -71.1307663,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 744.0,
+    "name": "Mass BJJ",
+    "lat": 42.4013997,
+    "lon": -71.1371846,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 1996.0,
+    "name": "Menotomy Grill and Tavern",
+    "lat": 42.4016224,
+    "lon": -71.1368099,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2153.0,
+    "name": "Mobil",
+    "lat": 42.4010463,
+    "lon": -71.1354845,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2330.0,
+    "name": "Season to Taste",
+    "lat": 42.3983272,
+    "lon": -71.1310573,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2368.0,
+    "name": "Blue Bikes - Linear Park - Mass. Ave. at Cameron Ave.",
+    "lat": 42.3978966,
+    "lon": -71.1298398,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2435.0,
+    "name": "Cambridge Oral Surgery",
+    "lat": 42.3964979,
+    "lon": -71.1289054,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2461.0,
+    "name": "North Cambridge Dental",
+    "lat": 42.3959789,
+    "lon": -71.1283865,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2533.0,
+    "name": "Cafe Barada",
+    "lat": 42.3947311,
+    "lon": -71.1269037,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2559.0,
+    "name": "Urban Hearth",
+    "lat": 42.3945095,
+    "lon": -71.1267233,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2577.0,
+    "name": "Amazon Hub Locker - Patrick",
+    "lat": 42.3942374,
+    "lon": -71.126073,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2719.0,
+    "name": "CHA Cambridge Family Health North",
+    "lat": 42.3915837,
+    "lon": -71.1232602,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2728.0,
+    "name": "Pine Village Preschool",
+    "lat": 42.3914685,
+    "lon": -71.1230348,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2750.0,
+    "name": "Mass Ave at Hadley/Walden",
+    "lat": 42.3911547,
+    "lon": -71.1225088,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2753.0,
+    "name": "Speedway",
+    "lat": 42.3912332,
+    "lon": -71.1223685,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2774.0,
+    "name": "Andy's Diner",
+    "lat": 42.3906604,
+    "lon": -71.1220775,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2780.0,
+    "name": "CSCA Cafe",
+    "lat": 42.3908746,
+    "lon": -71.121669,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2786.0,
+    "name": "International Language Center",
+    "lat": 42.3905102,
+    "lon": -71.1217387,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2792.0,
+    "name": "Down Under School of Yoga",
+    "lat": 42.3903595,
+    "lon": -71.1215248,
+    "source": "osm",
+    "osmTag": "leisure"
+  },
+  {
+    "t": 2793.0,
+    "name": "Ginsberg Academy",
+    "lat": 42.3903396,
+    "lon": -71.121512,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2798.0,
+    "name": "New Acropolis",
+    "lat": 42.3902983,
+    "lon": -71.1213718,
+    "source": "osm",
+    "osmTag": "amenity"
+  },
+  {
+    "t": 2807.0,
+    "name": "English Language School",
+    "lat": 42.3900798,
+    "lon": -71.1210975,
+    "source": "osm",
+    "osmTag": "amenity"
+  }
+]

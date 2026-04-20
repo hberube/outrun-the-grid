@@ -1,0 +1,37 @@
+[
+  {
+    "t_start": 741.0,
+    "t_end": 1031.0,
+    "name": "Alewife Greenway: Mass Ave to Bike Path",
+    "elapsed_time": 290,
+    "is_pr": false
+  },
+  {
+    "t_start": 1326.0,
+    "t_end": 1545.0,
+    "name": "Boardwalk Sprint",
+    "elapsed_time": 219,
+    "is_pr": false
+  },
+  {
+    "t_start": 1410.0,
+    "t_end": 1537.0,
+    "name": "Boardwalk",
+    "elapsed_time": 127,
+    "is_pr": false
+  },
+  {
+    "t_start": 1722.0,
+    "t_end": 1987.0,
+    "name": "Alewife Greenway: Bike Path to Mass Ave",
+    "elapsed_time": 265,
+    "is_pr": false
+  },
+  {
+    "t_start": 2160.0,
+    "t_end": 2367.0,
+    "name": "Mass Ave: Alewife Brook Parkway up to bike path",
+    "elapsed_time": 207,
+    "is_pr": false
+  }
+]

@@ -268,7 +268,6 @@ def strava_get_token(client_id, client_secret, refresh_token):
 def strava_get_activity(activity_id, access_token):
     resp = requests.get(
         f"https://www.strava.com/api/v3/activities/{activity_id}",
-        params={"include_all_efforts": "true"},
         headers={"Authorization": f"Bearer {access_token}"},
         timeout=15,
     )

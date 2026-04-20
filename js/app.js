@@ -410,11 +410,13 @@ async function selectRun(run) {
 
     addLandmarkPins();
 
-    // Load Strava segments (optional)
-    try {
-      const segResp = await fetch(`data/runs/${run.id}/segments.json`);
-      if (segResp.ok) segments = await segResp.json();
-    } catch (_) {}
+    // Load Strava segments (optional — only fetch if run has a Strava activity)
+    if (run.stravaActivityId) {
+      try {
+        const segResp = await fetch(`data/runs/${run.id}/segments.json`);
+        if (segResp.ok) segments = await segResp.json();
+      } catch (_) {}
+    }
 
     buildTimeline(landmarks);
     addKmMarkers();

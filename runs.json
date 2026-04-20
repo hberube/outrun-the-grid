@@ -8,6 +8,16 @@
     "gpx": "Cambridge-Classic-5K-Spring-withEve-withGarminStats.gpx",
     "stravaActivityId": "17902606035",
     "order": 1
+  }, 
+  {
+    "id": "course-aux-canards",
+    "name": "Course aux Canards",
+    "date": "2026-04-08",
+    "distance": "5K",
+    "videoId": "EZ80Re8oGG4",
+    "gpx": "Course-aux-Canards.gpx",
+    "stravaActivityId": "18027202568",
+    "order": 2
   },
   {
     "id": "run-eve-6k-041126",
@@ -17,6 +27,6 @@
     "videoId": "jqJGIaxlbpI",
     "gpx": "Run-with-Eve-6K-041126.gpx",
     "stravaActivityId": "",
-    "order": 2
+    "order": 3
   }
 ]
