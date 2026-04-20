@@ -1185,4 +1185,5 @@ initLangToggle();
 initFilters();
 initProgressBar();
 initElevationProfile();
+document.getElementById("stats-card")?.addEventListener("click", hideStatsCard);
 loadData();

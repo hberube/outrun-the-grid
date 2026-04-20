@@ -570,9 +570,9 @@ html, body {
 /* ── Stats card ── */
 .stats-card {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0.75rem;
+  left: 0.75rem;
+  transform: none;
   background: rgba(10, 10, 10, 0.92);
   border: 1px solid rgba(102, 252, 241, 0.3);
   border-radius: 8px;
@@ -581,7 +581,7 @@ html, body {
   text-align: center;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  pointer-events: auto;
+  cursor: pointer;
   min-width: 220px;
 }
 
