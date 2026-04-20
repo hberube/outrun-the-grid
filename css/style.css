@@ -549,6 +549,10 @@ html, body {
 .timeline-icon { font-size: 0.65rem; }
 .timeline-icon.osm       { color: var(--pink); }
 .timeline-icon.wikipedia { color: #c084fc; }
+.timeline-icon.strava    { color: #fbbf24; }
+
+.timeline-card.strava-pr { border-left: 2px solid #fbbf2466; }
+.strava-pr-detail { color: #fbbf24; font-family: var(--font-mono); }
 
 .timeline-name {
   font-size: 0.78rem;

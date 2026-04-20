@@ -5,6 +5,7 @@ let LANDMARK_SOURCES = ["overpass", "wikipedia"];
 let ytPlayer = null;
 let route = [];
 let landmarks = [];
+let segments = [];
 let shownLandmarks = new Set();
 let syncInterval = null;
 let map = null;
@@ -13,6 +14,8 @@ let activeRunId = null;
 let runs = [];
 let routeBounds = null;
 let zoomResetTimer = null;
+let activeSegment = null;
+let segmentFinishTimer = null;
 
 // ── Voice narration ────────────────────────────────────────────────────────
 let voiceEnabled = localStorage.getItem("otg_voice") === "true";
@@ -371,6 +374,9 @@ async function selectRun(run) {
   dykCacheFr.clear();
   if (zoomResetTimer) { clearTimeout(zoomResetTimer); zoomResetTimer = null; }
   cancelSpeech();
+  hideSegmentCard();
+  activeSegment = null;
+  segments = [];
 
   // Update picker active state
   document.querySelectorAll(".run-card").forEach(c => {
@@ -393,6 +399,13 @@ async function selectRun(run) {
     }
 
     addLandmarkPins();
+
+    // Load Strava segments (optional)
+    try {
+      const segResp = await fetch(`data/runs/${run.id}/segments.json`);
+      if (segResp.ok) segments = await segResp.json();
+    } catch (_) {}
+
     buildTimeline(landmarks);
   }
 }
@@ -439,10 +452,11 @@ function resetHUD() {
 }
 
 // ── Landmark filters ───────────────────────────────────────────────────────
-const FILTERS = { historic: true, places: true, stores: false, wiki: true };
+const FILTERS = { historic: true, places: true, stores: false, wiki: true, strava: true };
 
 function filterLandmarks(lms) {
   return lms.filter(lm => {
+    if (lm.source === "strava")    return FILTERS.strava;
     if (lm.source === "wikipedia") return FILTERS.wiki;
     const tag = lm.osmTag ?? "amenity";
     if (tag === "historic")                      return FILTERS.historic;
@@ -494,9 +508,21 @@ function buildTimeline(lms) {
   if (!list) return;
   list.innerHTML = "";
 
-  filterLandmarks(lms).forEach(lm => {
+  // Build PR segment entries as synthetic landmark-like objects
+  const prEntries = FILTERS.strava
+    ? segments.filter(s => s.is_pr).map(seg => ({
+        t: seg.t_end,
+        name: seg.name,
+        source: "strava",
+        _seg: seg,
+      }))
+    : [];
+
+  const allItems = [...filterLandmarks(lms), ...prEntries]
+    .sort((a, b) => a.t - b.t);
+
+  allItems.forEach(lm => {
     const card = document.createElement("div");
-    card.className = "timeline-card";
     card.dataset.t = lm.t;
     card.setAttribute("role", "button");
     card.setAttribute("tabindex", "0");
@@ -504,29 +530,57 @@ function buildTimeline(lms) {
 
     const m = Math.floor(lm.t / 60);
     const s = Math.floor(lm.t % 60).toString().padStart(2, "0");
-    const srcClass = lm.source === "wikipedia" ? "wikipedia" : "osm";
-    const icon = lm.source === "wikipedia" ? "◉" : "◈";
 
-    card.innerHTML = `
-      <div class="timeline-meta">
-        <span class="timeline-ts">${m}:${s}</span>
-        <span class="timeline-icon ${srcClass}">${icon}</span>
-        <span class="timeline-name">${lm.name}</span>
-      </div>
-      <p class="timeline-text">…</p>
-    `;
-
-    const activate = () => {
-      seekToLandmark(lm);
-      showDidYouKnow(lm);
-    };
-    card.addEventListener("click", activate);
-    card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); } });
-
-    fetchInfo(lm).then(info => {
-      const p = card.querySelector(".timeline-text");
-      if (p && info?.text) p.textContent = info.text;
-    });
+    if (lm.source === "strava") {
+      const seg = lm._seg;
+      card.className = "timeline-card strava-pr";
+      const delta = seg.kom_elapsed_time
+        ? seg.elapsed_time - seg.kom_elapsed_time
+        : null;
+      const deltaStr = delta !== null
+        ? `${delta >= 0 ? "+" : "-"}${fmtSecs(Math.abs(delta))} vs KOM`
+        : "";
+      const rankStr = seg.athlete_rank ? `#${seg.athlete_rank}` : "";
+      card.innerHTML = `
+        <div class="timeline-meta">
+          <span class="timeline-ts">${m}:${s}</span>
+          <span class="timeline-icon strava">★</span>
+          <span class="timeline-name">${lm.name}</span>
+        </div>
+        <p class="timeline-text strava-pr-detail">PR · ${fmtSecs(seg.elapsed_time)}${deltaStr ? " · " + deltaStr : ""}${rankStr ? " · " + rankStr : ""}</p>
+      `;
+      const activate = () => {
+        if (ytPlayer && typeof ytPlayer.seekTo === "function") {
+          ytPlayer.seekTo(seg.t_start, true);
+          ytPlayer.playVideo();
+          shownLandmarks.clear();
+        }
+      };
+      card.addEventListener("click", activate);
+      card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); } });
+    } else {
+      card.className = "timeline-card";
+      const srcClass = lm.source === "wikipedia" ? "wikipedia" : "osm";
+      const icon = lm.source === "wikipedia" ? "◉" : "◈";
+      card.innerHTML = `
+        <div class="timeline-meta">
+          <span class="timeline-ts">${m}:${s}</span>
+          <span class="timeline-icon ${srcClass}">${icon}</span>
+          <span class="timeline-name">${lm.name}</span>
+        </div>
+        <p class="timeline-text">…</p>
+      `;
+      const activate = () => {
+        seekToLandmark(lm);
+        showDidYouKnow(lm);
+      };
+      card.addEventListener("click", activate);
+      card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); } });
+      fetchInfo(lm).then(info => {
+        const p = card.querySelector(".timeline-text");
+        if (p && info?.text) p.textContent = info.text;
+      });
+    }
 
     list.appendChild(card);
   });
@@ -682,6 +736,7 @@ function onTick() {
   if (marker) marker.setLatLng([pt.lat, pt.lon]);
   updateHUD(pt, t);
   checkLandmarks(t);
+  checkSegments(t);
   updateActiveTimelineCard(t);
 }
 
@@ -701,6 +756,85 @@ function updateHUD(pt, t) {
   eleEl.textContent = pt.ele != null ? `${Math.round(pt.ele)}m` : "---m";
   const m = Math.floor(t / 60), s = Math.floor(t % 60).toString().padStart(2, "0");
   timeEl.textContent = `${m}:${s}`;
+}
+
+// ── Segment racing card ────────────────────────────────────────────────────
+function fmtSecs(s) {
+  const m = Math.floor(s / 60), ss = Math.floor(s % 60).toString().padStart(2, "0");
+  return `${m}:${ss}`;
+}
+
+function checkSegments(t) {
+  for (const seg of segments) {
+    if (t >= seg.t_start && t < seg.t_end) {
+      if (activeSegment !== seg) {
+        activeSegment = seg;
+        if (segmentFinishTimer) { clearTimeout(segmentFinishTimer); segmentFinishTimer = null; }
+        showSegmentCard(seg);
+      }
+      updateSegmentTimer(seg, t);
+      return;
+    }
+  }
+  // Not inside any segment
+  if (activeSegment) {
+    finalizeSegmentCard(activeSegment);
+    activeSegment = null;
+  }
+}
+
+function showSegmentCard(seg) {
+  const card = document.getElementById("segment-card");
+  document.getElementById("seg-name").textContent = seg.name;
+  document.getElementById("seg-timer").textContent = "0:00";
+  document.getElementById("seg-pr-badge").classList.toggle("hidden", !seg.is_pr);
+  const komEl = document.getElementById("seg-kom");
+  komEl.textContent = seg.kom_elapsed_time
+    ? `KOM ${fmtSecs(seg.kom_elapsed_time)}${seg.kom_athlete ? " · " + seg.kom_athlete : ""}`
+    : "";
+  document.getElementById("seg-delta").textContent = "";
+  document.getElementById("seg-delta").className = "seg-delta";
+  card.classList.remove("hidden", "finalized");
+}
+
+function updateSegmentTimer(seg, t) {
+  const elapsed = t - seg.t_start;
+  document.getElementById("seg-timer").textContent = fmtSecs(elapsed);
+  if (seg.kom_elapsed_time) {
+    const delta = elapsed - seg.kom_elapsed_time;
+    const deltaEl = document.getElementById("seg-delta");
+    const sign = delta >= 0 ? "+" : "-";
+    deltaEl.textContent = `${sign}${fmtSecs(Math.abs(delta))} vs KOM`;
+    deltaEl.className = `seg-delta ${delta <= 0 ? "ahead" : "behind"}`;
+  }
+}
+
+function finalizeSegmentCard(seg) {
+  document.getElementById("seg-timer").textContent = fmtSecs(seg.elapsed_time);
+  const deltaEl = document.getElementById("seg-delta");
+  if (seg.kom_elapsed_time) {
+    const delta = seg.elapsed_time - seg.kom_elapsed_time;
+    const sign = delta >= 0 ? "+" : "-";
+    deltaEl.textContent = `${sign}${fmtSecs(Math.abs(delta))} vs KOM`;
+    deltaEl.className = `seg-delta ${delta <= 0 ? "ahead" : "behind"}`;
+  }
+  if (seg.athlete_rank) {
+    const rankEl = document.createElement("div");
+    rankEl.className = "seg-rank";
+    rankEl.textContent = `RANK #${seg.athlete_rank}`;
+    document.getElementById("segment-card").appendChild(rankEl);
+  }
+  document.getElementById("segment-card").classList.add("finalized");
+  segmentFinishTimer = setTimeout(hideSegmentCard, 5000);
+}
+
+function hideSegmentCard() {
+  const card = document.getElementById("segment-card");
+  card.classList.add("hidden");
+  card.classList.remove("finalized");
+  // Remove any dynamically added rank element
+  card.querySelectorAll(".seg-rank").forEach(el => el.remove());
+  if (segmentFinishTimer) { clearTimeout(segmentFinishTimer); segmentFinishTimer = null; }
 }
 
 // ── Landmark overlay ───────────────────────────────────────────────────────

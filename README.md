@@ -167,8 +167,86 @@ Each landmark has an `osmTag` field that determines which filter pill controls i
 | `tourism`, `leisure` | PLACES | Yes |
 | `amenity` | STORES | No |
 | `source: "wikipedia"` | WIKI | Yes |
+| `source: "strava"` | STRAVA | Yes |
 
 To change the default, edit `const FILTERS` in `js/app.js`.
+
+---
+
+## Strava segment racing
+
+When a Strava activity ID is configured, the app shows a live racing card during each segment — elapsed time, delta vs. the KOM, and a gold PR badge if you set a personal record. PR segments also appear as special entries in the route timeline.
+
+### Step 1 — Get your Strava activity ID
+
+Open the activity on Strava. The URL is `https://www.strava.com/activities/`**`12345678901`**. Copy the numeric ID.
+
+### Step 2 — Add it to `runs.json`
+
+```json
+{
+  "id": "my-run-10k-april",
+  "stravaActivityId": "12345678901",
+  ...
+}
+```
+
+### Step 3 — Set Strava API credentials
+
+Create a Strava API application at [strava.com/settings/api](https://www.strava.com/settings/api) if you don't have one. Then set these environment variables in your terminal before running `build.py`:
+
+```bash
+# Windows
+set STRAVA_CLIENT_ID=12345
+set STRAVA_CLIENT_SECRET=abc123...
+set STRAVA_REFRESH_TOKEN=def456...
+
+# macOS / Linux
+export STRAVA_CLIENT_ID=12345
+export STRAVA_CLIENT_SECRET=abc123...
+export STRAVA_REFRESH_TOKEN=def456...
+```
+
+> **Never commit these values.** Set them only in your terminal session.
+
+To get a refresh token with `activity:read_all` scope, use the Strava OAuth flow once (e.g. via [strava-get-token](https://github.com/nats-nui/strava-get-token) or any OAuth helper), then save the refresh token — it stays valid until revoked.
+
+### Step 4 — Run `build.py`
+
+```bash
+python scripts/build.py path/to/your_run.gpx --id my-run-10k-april
+```
+
+If Strava credentials are set and `stravaActivityId` is present in `runs.json`, the script automatically fetches segment efforts and writes:
+
+```
+data/runs/my-run-10k-april/
+├── route_data.json
+├── landmarks.json
+└── segments.json    ← new
+```
+
+If credentials are missing, a note is printed and the script continues without the Strava data.
+
+### `segments.json` format
+
+```json
+[
+  {
+    "t_start": 245.0,
+    "t_end": 347.0,
+    "name": "Kendall Sq Sprint",
+    "elapsed_time": 102,
+    "kom_elapsed_time": 91,
+    "kom_athlete": "M. Dupont",
+    "athlete_rank": 47,
+    "is_pr": true,
+    "previous_pr": 110
+  }
+]
+```
+
+All times are in seconds relative to the start of the video.
 
 ---
 
@@ -182,7 +260,8 @@ outrun-the-grid/
 │   └── runs/
 │       └── <run-id>/
 │           ├── route_data.json   # GPS track points (generated)
-│           └── landmarks.json    # POIs with descriptions (generated + editable)
+│           ├── landmarks.json    # POIs with descriptions (generated + editable)
+│           └── segments.json     # Strava segment efforts (generated, optional)
 ├── css/
 │   └── style.css             # Synthwave theme + layout
 ├── js/
