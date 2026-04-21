@@ -1,6 +1,7 @@
 """
 build.py — Outrun the Grid data pipeline
-Usage: python scripts/build.py <path/to/run.gpx> --id <run-id> [--strava-activity-id <id>]
+Usage: python scripts/build.py <path/to/run.gpx|run.mp4> --id <run-id> [--strava-activity-id <id>]
+       MP4 input (Insta360 or other camera with embedded GPS) requires exiftool in PATH.
 
 Outputs:
   data/runs/<id>/route_data.json  — GPS track points with pace/elevation
@@ -364,11 +365,36 @@ def build_segments(activity, access_token):
     return segments
 
 
+# ── MP4 GPS extraction ────────────────────────────────────────────────────────
+
+def extract_gps_from_mp4(mp4_path):
+    import shutil, tempfile, subprocess
+
+    if not shutil.which("exiftool"):
+        sys.exit("exiftool not found in PATH. Install from https://exiftool.org and retry.")
+
+    tmp = tempfile.NamedTemporaryFile(suffix=".gpx", delete=False)
+    tmp.close()
+
+    result = subprocess.run(
+        ["exiftool", "-ee3", "-p", "gpx.fmt", mp4_path],
+        capture_output=True, text=True
+    )
+    if result.returncode != 0 or not result.stdout.strip():
+        os.unlink(tmp.name)
+        sys.exit(f"exiftool failed to extract GPS from {mp4_path}.\n{result.stderr}")
+
+    with open(tmp.name, "w", encoding="utf-8") as f:
+        f.write(result.stdout)
+    print(f"Extracted GPS from MP4 → temp GPX")
+    return tmp.name
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("gpx_file", help="Path to Garmin .gpx export")
+    parser.add_argument("gpx_file", help="Path to .gpx export (Garmin) or .mp4 (camera with GPS, requires exiftool)")
     parser.add_argument("--id", dest="run_id", required=True,
                         help="Run ID matching runs.json (e.g. run-eve-6k)")
     parser.add_argument("--strava-activity-id", dest="strava_activity_id", default=None,
@@ -378,12 +404,19 @@ def main():
     if not os.path.isfile(args.gpx_file):
         sys.exit(f"File not found: {args.gpx_file}")
 
+    temp_gpx = None
+    if args.gpx_file.lower().endswith(".mp4"):
+        temp_gpx = extract_gps_from_mp4(args.gpx_file)
+        gpx_path = temp_gpx
+    else:
+        gpx_path = args.gpx_file
+
     out_dir = os.path.join(os.path.dirname(__file__), "..", "data", "runs", args.run_id)
     os.makedirs(out_dir, exist_ok=True)
 
     # ── Route ─────────────────────────────────────────────────────────────────
     print(f"Parsing {args.gpx_file}...")
-    route = parse_gpx(args.gpx_file)
+    route = parse_gpx(gpx_path)
     print(f"Extracted {len(route)} track points.")
 
     route_path = os.path.join(out_dir, "route_data.json")
@@ -454,6 +487,9 @@ def main():
         if not client_secret:  missing.append("STRAVA_CLIENT_SECRET")
         if not refresh_token:  missing.append("STRAVA_REFRESH_TOKEN")
         print(f"\nNote: Skipping Strava segments. Set {', '.join(missing)} to enable.")
+
+    if temp_gpx and os.path.exists(temp_gpx):
+        os.unlink(temp_gpx)
 
 
 if __name__ == "__main__":

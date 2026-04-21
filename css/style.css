@@ -187,7 +187,6 @@ html, body {
 
 .video-panel {
   border-right: 1px solid var(--border);
-  position: relative;
 }
 
 .map-panel {
@@ -568,28 +567,32 @@ html, body {
   margin: 0;
 }
 
-/* ── Stats card ── */
+/* ── Stats band ── */
 .stats-card {
-  position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
-  transform: none;
-  background: rgba(10, 10, 10, 0.92);
-  border: 1px solid rgba(102, 252, 241, 0.3);
-  border-radius: 8px;
-  padding: 1.25rem 1.75rem;
-  z-index: 200;
-  text-align: center;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  padding: 0.55rem 1.5rem;
+  background: var(--deeper);
+  border-bottom: 1px solid rgba(102, 252, 241, 0.2);
+  position: relative;
   cursor: pointer;
-  min-width: 220px;
+  animation: stats-drop 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+}
+.stats-card.hidden { display: none; }
+
+@keyframes stats-drop {
+  from { opacity: 0; transform: translateY(-100%); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .stats-close {
   position: absolute;
-  top: 0.5rem;
-  right: 0.6rem;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
   border: none;
   color: var(--dim);
@@ -602,23 +605,15 @@ html, body {
 }
 .stats-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
 
-.stats-title {
-  font-size: 0.6rem;
-  letter-spacing: 0.25em;
-  color: var(--dim);
-  margin-bottom: 0.75rem;
-}
-
 .stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem 1.25rem;
+  display: flex;
+  gap: 2rem;
 }
 
 .stat-item {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  align-items: baseline;
+  gap: 0.5rem;
 }
 
 .stat-label {
@@ -629,16 +624,16 @@ html, body {
 
 .stat-value {
   font-family: var(--font-mono);
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--cyan);
 }
 
 .stats-dismiss {
-  margin-top: 0.65rem;
   font-size: 0.55rem;
   letter-spacing: 0.12em;
-  color: rgba(160, 160, 160, 0.4);
+  color: rgba(160, 160, 160, 0.35);
+  white-space: nowrap;
 }
 
 /* ── Video progress bar ── */
@@ -943,6 +938,6 @@ html, body {
 
   #elevation-profile { display: none; }
 
-  .stats-card { min-width: 180px; padding: 1rem 1.25rem; }
-  .stat-value { font-size: 0.95rem; }
+  .stats-grid { gap: 1rem; }
+  .stats-dismiss { display: none; }
 }

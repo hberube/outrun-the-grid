@@ -99,12 +99,30 @@ function fetchInfo(lm) {
 
 let speakQueue = Promise.resolve();
 
+const DUCK_VOLUME = 20;
+let preDuckVolume = 100;
+let isDucked = false;
+
+function duckAudio() {
+  if (isDucked || !player?.setVolume) return;
+  preDuckVolume = player.getVolume?.() ?? 100;
+  player.setVolume(DUCK_VOLUME);
+  isDucked = true;
+}
+
+function unduckAudio() {
+  if (!isDucked || !player?.setVolume) return;
+  player.setVolume(preDuckVolume);
+  isDucked = false;
+}
+
 function speakUtterance(text) {
   return new Promise(resolve => {
     const utt = new SpeechSynthesisUtterance(text);
     applyVoice(utt);
-    utt.onend = resolve;
-    utt.onerror = resolve;
+    utt.onstart = duckAudio;
+    utt.onend = () => { unduckAudio(); resolve(); };
+    utt.onerror = () => { unduckAudio(); resolve(); };
     speechSynthesis.speak(utt);
   });
 }
@@ -112,6 +130,7 @@ function speakUtterance(text) {
 function cancelSpeech() {
   speechSynthesis.cancel();
   speakQueue = Promise.resolve();
+  unduckAudio();
 }
 
 async function fetchLandmarkInfoFr(lm) {
